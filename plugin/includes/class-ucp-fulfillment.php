@@ -10,12 +10,12 @@ defined('ABSPATH') || exit;
  * 2026-08-25). Virtual/downloadable Woo products are digital goods: they are
  * omitted from checkout methods. `digital` is used on order expectations.
  */
-final class Ax402_WC_Ucp_Fulfillment
+final class Launa_WC_Ucp_Fulfillment
 {
-    public const META_DESTINATION = '_ax402_ucp_destination';
-    public const META_SHIPPING_OPTION = '_ax402_ucp_shipping_option_id';
-    public const META_PICKUP_LOCATION = '_ax402_ucp_pickup_location_id';
-    public const META_METHOD_TYPE = '_ax402_ucp_fulfillment_method';
+    public const META_DESTINATION = '_launa_ucp_destination';
+    public const META_SHIPPING_OPTION = '_launa_ucp_shipping_option_id';
+    public const META_PICKUP_LOCATION = '_launa_ucp_pickup_location_id';
+    public const META_METHOD_TYPE = '_launa_ucp_fulfillment_method';
 
     /**
      * Order-expectation method_type (shipping | pickup | digital).
@@ -543,7 +543,7 @@ final class Ax402_WC_Ucp_Fulfillment
     ): array {
         $options = [];
         foreach ($rates as $rate) {
-            $cost = Ax402_WC_Ucp_Money::usd_to_cents_ceil((string) $rate->get_cost()) ?? 0;
+            $cost = Launa_WC_Ucp_Money::usd_to_cents_ceil((string) $rate->get_cost()) ?? 0;
             $options[] = [
                 'id' => self::rate_id($rate),
                 'title' => $rate->get_label(),

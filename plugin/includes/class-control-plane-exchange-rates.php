@@ -4,19 +4,19 @@ declare(strict_types=1);
 defined('ABSPATH') || exit;
 
 /**
- * Live Ax402 control-plane exchange rates (`GET /exchange-rates?quote=usd&date=YYYY-MM-DD`).
+ * Live Launa control-plane exchange rates (`GET /exchange-rates?quote=usd&date=YYYY-MM-DD`).
  *
  * API `rate` values are quote-currency prices per 1 token (USD per token from CoinGecko).
- * This provider converts them to tokens-per-1-USD for {@see Ax402_WC_Money::usd_to_token_amount()}.
+ * This provider converts them to tokens-per-1-USD for {@see Launa_WC_Money::usd_to_token_amount()}.
  *
  * Fetch strategy: weekdays try "today", then yesterday (if a weekday), then the
  * closest previous business day (Mon–Fri). Weekend calendar dates are skipped.
  */
-final class Ax402_WC_Control_Plane_Exchange_Rates implements Ax402_WC_Exchange_Rate_Provider
+final class Launa_WC_Control_Plane_Exchange_Rates implements Launa_WC_Exchange_Rate_Provider
 {
     private const CACHE_TTL_SECONDS = 300;
 
-    private Ax402_WC_Control_Plane_Client $client;
+    private Launa_WC_Control_Plane_Client $client;
 
     /** @var array<string, string>|null symbol|network => tokens-per-USD */
     private ?array $tokens_per_usd = null;
@@ -32,7 +32,7 @@ final class Ax402_WC_Control_Plane_Exchange_Rates implements Ax402_WC_Exchange_R
     private string $resolved_date = '';
 
     public function __construct(
-        Ax402_WC_Control_Plane_Client $client,
+        Launa_WC_Control_Plane_Client $client,
         bool $force_refresh = false,
         ?\DateTimeImmutable $now = null
     ) {
@@ -283,6 +283,6 @@ final class Ax402_WC_Control_Plane_Exchange_Rates implements Ax402_WC_Exchange_R
 
     private static function cache_key_for_base_url(string $base_url): string
     {
-        return 'ax402_wc_fx_usd_' . md5(rtrim($base_url, '/'));
+        return 'launa_wc_fx_usd_' . md5(rtrim($base_url, '/'));
     }
 }

@@ -3,7 +3,7 @@
  *
  * Requires:
  * - `ucp` on PATH (https://github.com/Shopify/ucp-cli)
- * - UCP enabled (on after seed unless AX402_UCP_ENABLED=no)
+ * - UCP enabled (on after seed unless LAUNA_UCP_ENABLED=no; AX402_UCP_ENABLED still works)
  * - WP_BASE_URL — HTTPS origin the CLI will use as --business (ngrok/cloudflare)
  *
  * Walks discover → catalog search → --input-schema → cart → checkout →
@@ -155,7 +155,7 @@ async function main() {
     'catalog search'
   );
   const products = resultOf(search).products || [];
-  const skuHint = physical ? 'ax402-ship-box' : 'ax402-micropay';
+  const skuHint = physical ? 'launa-ship-box' : 'launa-micropay';
   let itemId = '';
   for (const product of products) {
     const variant = product.variants?.[0];

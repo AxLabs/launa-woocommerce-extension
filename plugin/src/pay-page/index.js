@@ -5,8 +5,8 @@ import {
 	usePaywall,
 	WalletPicker,
 	WalletSelectionRequiredError,
-} from '@ax402/react-paywall';
-import '@ax402/react-paywall/styles.css';
+} from '@launaio/react-paywall';
+import '@launaio/react-paywall/styles.css';
 import { pollUntilPaid } from './poll-status';
 import {
 	formatPayLabel,
@@ -38,7 +38,7 @@ import {
 import { wrapPaywallFetch } from './payment-fetch';
 
 function readConfig() {
-	return window.ax402PayPage || {};
+	return window.launaPayPage || {};
 }
 
 function shortAddress( address, hedera = false ) {
@@ -54,7 +54,7 @@ function shortAddress( address, hedera = false ) {
 function NetworkGlyph() {
 	return (
 		<svg
-			className="ax402-settle-glyph"
+			className="launa-settle-glyph"
 			viewBox="0 0 16 16"
 			width="12"
 			height="12"
@@ -82,7 +82,7 @@ function NetworkGlyph() {
 function RateGlyph() {
 	return (
 		<svg
-			className="ax402-settle-glyph"
+			className="launa-settle-glyph"
 			viewBox="0 0 16 16"
 			width="12"
 			height="12"
@@ -117,11 +117,11 @@ function SettlementPicker( { options, selectedId, onSelect, locked } ) {
 	const selectable = options.length > 1 && ! locked;
 
 	return (
-		<div className={ locked ? 'ax402-settle is-locked' : 'ax402-settle' }>
-			<p className="ax402-settle-label">
+		<div className={ locked ? 'launa-settle is-locked' : 'launa-settle' }>
+			<p className="launa-settle-label">
 				{ selectable ? 'Choose settlement token' : 'Settlement token' }
 			</p>
-			<ul className="ax402-settle-list">
+			<ul className="launa-settle-list">
 				{ options.map( ( option ) => {
 					const active = option.tokenId === selectedId;
 					const amountLabel = formatTokenAmount( option.amount, 8 );
@@ -135,8 +135,8 @@ function SettlementPicker( { options, selectedId, onSelect, locked } ) {
 								type="button"
 								className={
 									active
-										? 'ax402-settle-option is-active'
-										: 'ax402-settle-option'
+										? 'launa-settle-option is-active'
+										: 'launa-settle-option'
 								}
 								disabled={ ! selectable }
 								aria-pressed={ active }
@@ -146,22 +146,22 @@ function SettlementPicker( { options, selectedId, onSelect, locked } ) {
 									}
 								} }
 							>
-								<span className="ax402-settle-top">
-									<span className="ax402-settle-symbol">
+								<span className="launa-settle-top">
+									<span className="launa-settle-symbol">
 										{ option.symbol }
 									</span>
-									<span className="ax402-settle-network">
+									<span className="launa-settle-network">
 										<NetworkGlyph />
 										{ option.networkLabel ||
 											option.network ||
 											'' }
 									</span>
 								</span>
-								<span className="ax402-settle-amount">
+								<span className="launa-settle-amount">
 									{ amountLabel } { option.symbol }
 								</span>
 								{ rateLabel ? (
-									<span className="ax402-settle-rate">
+									<span className="launa-settle-rate">
 										<RateGlyph />
 										{ rateLabel }
 									</span>
@@ -178,18 +178,18 @@ function SettlementPicker( { options, selectedId, onSelect, locked } ) {
 function StepCard( { title, description, children, footer, live } ) {
 	return (
 		<div
-			className="ax402-step"
+			className="launa-step"
 			role="region"
 			aria-label={ title }
 			aria-live={ live || undefined }
 		>
-			<h2 className="ax402-step-title">{ title }</h2>
+			<h2 className="launa-step-title">{ title }</h2>
 			{ description ? (
-				<p className="ax402-step-desc">{ description }</p>
+				<p className="launa-step-desc">{ description }</p>
 			) : null }
 			{ children }
 			{ footer ? (
-				<div className="ax402-step-footer">{ footer }</div>
+				<div className="launa-step-footer">{ footer }</div>
 			) : null }
 		</div>
 	);
@@ -288,7 +288,7 @@ function ConnectStep( { hedera } ) {
 			) : (
 				<button
 					type="button"
-					className="ax402-primary-btn"
+					className="launa-primary-btn"
 					disabled={ busy }
 					onClick={ onConnect }
 				>
@@ -303,15 +303,15 @@ function ConnectStep( { hedera } ) {
 				</button>
 			) }
 			{ busy ? (
-				<div className="ax402-spinner" aria-hidden="true" />
+				<div className="launa-spinner" aria-hidden="true" />
 			) : null }
 			{ error ? (
-				<p className="ax402-step-error" role="alert">
+				<p className="launa-step-error" role="alert">
 					{ error }
 				</p>
 			) : null }
 			{ connectedWalletName ? (
-				<p className="ax402-step-meta">{ connectedWalletName }</p>
+				<p className="launa-step-meta">{ connectedWalletName }</p>
 			) : null }
 		</StepCard>
 	);
@@ -367,17 +367,17 @@ function SwitchNetworkStep( { option } ) {
 		>
 			<button
 				type="button"
-				className="ax402-primary-btn"
+				className="launa-primary-btn"
 				disabled={ busy }
 				onClick={ onSwitchNetwork }
 			>
 				{ busy ? 'Switching…' : `Switch to ${ option.networkLabel }` }
 			</button>
 			{ busy ? (
-				<div className="ax402-spinner" aria-hidden="true" />
+				<div className="launa-spinner" aria-hidden="true" />
 			) : null }
 			{ error ? (
-				<p className="ax402-step-error" role="alert">
+				<p className="launa-step-error" role="alert">
 					{ error }
 				</p>
 			) : null }
@@ -389,8 +389,8 @@ function CheckingWalletStep( { option, phase } ) {
 	const copy = walletCheckCopy( { phase, option } );
 	return (
 		<StepCard title={ copy.title } description={ copy.description }>
-			<div className="ax402-spinner" aria-hidden="true" />
-			<p className="ax402-step-meta" aria-live="polite">
+			<div className="launa-spinner" aria-hidden="true" />
+			<p className="launa-step-meta" aria-live="polite">
 				This is not a payment yet. We only read your network and
 				balance.
 			</p>
@@ -409,7 +409,7 @@ function WalletIssueStep( { message, onRetry } ) {
 		>
 			<button
 				type="button"
-				className="ax402-primary-btn"
+				className="launa-primary-btn"
 				onClick={ onRetry }
 			>
 				Try again
@@ -437,7 +437,7 @@ function InsufficientBalanceStep( { option, balanceAtomic } ) {
 				</span>
 			}
 		>
-			<p className="ax402-step-hint">
+			<p className="launa-step-hint">
 				Add funds on { option.networkLabel }, then this page will unlock
 				payment automatically.
 			</p>
@@ -452,8 +452,8 @@ function ConfirmingPaymentStep() {
 			description="Your wallet payment was submitted. You don’t need to confirm anything else in your wallet. Waiting for the store to confirm it — this usually takes a few seconds."
 			live="polite"
 		>
-			<div className="ax402-spinner" aria-hidden="true" />
-			<p className="ax402-step-meta">Do not close this page.</p>
+			<div className="launa-spinner" aria-hidden="true" />
+			<p className="launa-step-meta">Do not close this page.</p>
 		</StepCard>
 	);
 }
@@ -477,7 +477,7 @@ function PayStep( {
 			<StepCard title="Payment not confirmed yet" description={ error }>
 				<button
 					type="button"
-					className="ax402-primary-btn"
+					className="launa-primary-btn"
 					onClick={ () => {
 						window.location.reload();
 					} }
@@ -485,7 +485,7 @@ function PayStep( {
 					Check again
 				</button>
 				{ config.thankYouUrl ? (
-					<p className="ax402-step-meta">
+					<p className="launa-step-meta">
 						<a href={ config.thankYouUrl }>View order status</a>
 					</p>
 				) : null }
@@ -494,11 +494,11 @@ function PayStep( {
 	}
 
 	return (
-		<div className="ax402-pay-step">
+		<div className="launa-pay-step">
 			{ confirming ? <ConfirmingPaymentStep /> : null }
 			{ phase === 'confirming' ? null : (
 				<div
-					className="ax402-pay-gate"
+					className="launa-pay-gate"
 					hidden={ confirming }
 					aria-hidden={ confirming }
 				>
@@ -511,7 +511,7 @@ function PayStep( {
 						priceLabel={ priceLabel }
 						agentDiscovery={ false }
 						inspectOnMount
-						className="ax402-inline-gate"
+						className="launa-inline-gate"
 						onUnlocked={ async () => {
 							// Freeze the parent balance gate: post-settlement balance is
 							// below the order amount and would otherwise flash "Insufficient".
@@ -789,7 +789,7 @@ function PaymentSteps( {
 			>
 				<button
 					type="button"
-					className="ax402-primary-btn"
+					className="launa-primary-btn"
 					onClick={ () => {
 						window.location.reload();
 					} }
@@ -804,7 +804,7 @@ function PaymentSteps( {
 				title="Preparing payment…"
 				description="Setting the exact settlement amount for the selected token."
 			>
-				<div className="ax402-spinner" aria-hidden="true" />
+				<div className="launa-spinner" aria-hidden="true" />
 			</StepCard>
 		);
 	} else {
@@ -820,7 +820,7 @@ function PaymentSteps( {
 		);
 	}
 
-	return <div className="ax402-steps">{ step }</div>;
+	return <div className="launa-steps">{ step }</div>;
 }
 
 function PayApp() {
@@ -925,7 +925,7 @@ function PayApp() {
 					setEndpointReady( false );
 					setLockError(
 						e?.message ||
-							'Could not set the settlement amount on Ax402'
+							'Could not set the settlement amount on Launa'
 					);
 				}
 			}
@@ -965,7 +965,7 @@ function PayApp() {
 
 	return (
 		<>
-			<div className="ax402-order-summary">
+			<div className="launa-order-summary">
 				<div>
 					<span>Order total (USD)</span>
 					<strong>
@@ -1026,7 +1026,7 @@ function PayApp() {
 	);
 }
 
-const rootEl = document.getElementById( 'ax402-pay-root' );
+const rootEl = document.getElementById( 'launa-pay-root' );
 if ( rootEl ) {
 	createRoot( rootEl ).render( <PayApp /> );
 }

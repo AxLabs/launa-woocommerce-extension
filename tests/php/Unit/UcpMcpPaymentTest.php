@@ -1,10 +1,10 @@
 <?php
 declare(strict_types=1);
 
-namespace Ax402\WC\Tests\Unit;
+namespace Launa\WC\Tests\Unit;
 
-use Ax402_WC_Ucp_Mcp;
-use Ax402_WC_Ucp_Mcp_Payment;
+use Launa_WC_Ucp_Mcp;
+use Launa_WC_Ucp_Mcp_Payment;
 use PHPUnit\Framework\TestCase;
 
 final class UcpMcpPaymentTest extends TestCase
@@ -13,34 +13,34 @@ final class UcpMcpPaymentTest extends TestCase
     {
         $payload = [
             'x402Version' => 2,
-            'resource' => ['url' => 'https://shop.dev.x.ax402.io/pay'],
+            'resource' => ['url' => 'https://shop.dev.x.launa.io/pay'],
             'accepts' => [['network' => 'eip155:8453', 'amount' => '10000']],
         ];
-        $header = Ax402_WC_Ucp_Mcp_Payment::encode_header_payload($payload);
+        $header = Launa_WC_Ucp_Mcp_Payment::encode_header_payload($payload);
         $this->assertNotSame('', $header);
-        $this->assertSame($payload, Ax402_WC_Ucp_Mcp_Payment::decode_header($header));
+        $this->assertSame($payload, Launa_WC_Ucp_Mcp_Payment::decode_header($header));
     }
 
     public function test_encode_passes_through_header_string(): void
     {
-        $header = Ax402_WC_Ucp_Mcp_Payment::encode_header_payload(['a' => 1]);
-        $this->assertSame($header, Ax402_WC_Ucp_Mcp_Payment::encode_header_payload($header));
+        $header = Launa_WC_Ucp_Mcp_Payment::encode_header_payload(['a' => 1]);
+        $this->assertSame($header, Launa_WC_Ucp_Mcp_Payment::encode_header_payload($header));
     }
 
     public function test_signature_from_x402_payment_meta(): void
     {
         $payment = ['x402Version' => 2, 'payload' => ['signature' => '0xabc']];
-        $encoded = Ax402_WC_Ucp_Mcp_Payment::signature_from_call(
+        $encoded = Launa_WC_Ucp_Mcp_Payment::signature_from_call(
             ['_meta' => ['x402/payment' => $payment]],
             ['id' => 'wc_order_1', 'checkout' => []]
         );
-        $this->assertSame($payment, Ax402_WC_Ucp_Mcp_Payment::decode_header($encoded));
+        $this->assertSame($payment, Launa_WC_Ucp_Mcp_Payment::decode_header($encoded));
     }
 
     public function test_signature_from_checkout_payment_field(): void
     {
-        $header = Ax402_WC_Ucp_Mcp_Payment::encode_header_payload(['payload' => ['signature' => '0xdef']]);
-        $encoded = Ax402_WC_Ucp_Mcp_Payment::signature_from_body([
+        $header = Launa_WC_Ucp_Mcp_Payment::encode_header_payload(['payload' => ['signature' => '0xdef']]);
+        $encoded = Launa_WC_Ucp_Mcp_Payment::signature_from_body([
             'payment' => [
                 'instruments' => [[
                     'id' => 'instr_x402_1',
@@ -56,7 +56,7 @@ final class UcpMcpPaymentTest extends TestCase
 
     public function test_inject_signature_survives_call_parts(): void
     {
-        $injected = Ax402_WC_Ucp_Mcp_Payment::inject_signature(
+        $injected = Launa_WC_Ucp_Mcp_Payment::inject_signature(
             [
                 'meta' => [],
                 'id' => 'wc_order_abc',
@@ -65,7 +65,7 @@ final class UcpMcpPaymentTest extends TestCase
             'sig-value',
             'sig-data'
         );
-        $parts = Ax402_WC_Ucp_Mcp::call_parts('complete_checkout', $injected);
+        $parts = Launa_WC_Ucp_Mcp::call_parts('complete_checkout', $injected);
         $this->assertSame('wc_order_abc', $parts['id']);
         $this->assertSame('sig-value', $parts['body']['payment']['payment_signature']);
         $this->assertSame('sig-data', $parts['body']['payment']['payment_signature_data']);
@@ -75,8 +75,8 @@ final class UcpMcpPaymentTest extends TestCase
     public function test_attach_payment_required_to_tool_result(): void
     {
         $required = ['maxAmountRequired' => '10000', 'network' => 'eip155:8453'];
-        $header = Ax402_WC_Ucp_Mcp_Payment::encode_header_payload($required);
-        $attached = Ax402_WC_Ucp_Mcp_Payment::attach_to_tool_result(
+        $header = Launa_WC_Ucp_Mcp_Payment::encode_header_payload($required);
+        $attached = Launa_WC_Ucp_Mcp_Payment::attach_to_tool_result(
             [
                 'id' => 'wc_order_1',
                 'status' => 'ready_for_complete',
@@ -92,8 +92,8 @@ final class UcpMcpPaymentTest extends TestCase
     public function test_attach_payment_response_meta(): void
     {
         $receipt = ['success' => true, 'transaction' => '0x1'];
-        $header = Ax402_WC_Ucp_Mcp_Payment::encode_header_payload($receipt);
-        $attached = Ax402_WC_Ucp_Mcp_Payment::attach_to_tool_result(
+        $header = Launa_WC_Ucp_Mcp_Payment::encode_header_payload($receipt);
+        $attached = Launa_WC_Ucp_Mcp_Payment::attach_to_tool_result(
             ['status' => 'completed'],
             ['payment-response' => $header]
         );
@@ -103,7 +103,7 @@ final class UcpMcpPaymentTest extends TestCase
 
     public function test_tool_result_keeps_402_as_success_jsonrpc(): void
     {
-        $payload = Ax402_WC_Ucp_Mcp::tool_result_payload(
+        $payload = Launa_WC_Ucp_Mcp::tool_result_payload(
             ['payment_required' => ['x402Version' => 2]],
             402,
             ['x402/payment-required' => ['x402Version' => 2]]
@@ -124,7 +124,7 @@ final class UcpMcpPaymentTest extends TestCase
             'resource' => ['url' => 'https://gateway.example/pay'],
             'accepts' => [['network' => 'eip155:8453']],
         ];
-        $payload = Ax402_WC_Ucp_Mcp::tool_result_payload(
+        $payload = Launa_WC_Ucp_Mcp::tool_result_payload(
             [
                 'id' => 'wc_order_1',
                 'status' => 'ready_for_complete',
@@ -141,7 +141,7 @@ final class UcpMcpPaymentTest extends TestCase
 
     public function test_tool_result_marks_other_http_errors(): void
     {
-        $payload = Ax402_WC_Ucp_Mcp::tool_result_payload(['messages' => []], 500);
+        $payload = Launa_WC_Ucp_Mcp::tool_result_payload(['messages' => []], 500);
         $this->assertTrue($payload['isError']);
         $this->assertArrayNotHasKey('_meta', $payload);
     }

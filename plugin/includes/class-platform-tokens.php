@@ -5,16 +5,16 @@ defined('ABSPATH') || exit;
 
 
 /**
- * Build x402 accept options from Ax402 /config/platform payment tokens.
+ * Build x402 accept options from Launa /config/platform payment tokens.
  *
  * Tokens and networks come from the control plane — nothing is hard-coded per chain/asset
  * beyond optional environment seeding (dev vs prod platform domain).
  */
-final class Ax402_WC_Platform_Tokens
+final class Launa_WC_Platform_Tokens
 {
     /**
      * Legacy helpers kept for older tests / onboarding seed.
-     * Prefer {@see Ax402_WC_Network_Catalog} for display/RPC.
+     * Prefer {@see Launa_WC_Network_Catalog} for display/RPC.
      */
     public const NETWORK_SEPOLIA = 'eip155:845320402';
     public const NETWORK_BASE_MAINNET = 'eip155:8453';
@@ -31,7 +31,7 @@ final class Ax402_WC_Platform_Tokens
         };
     }
 
-    public static function network_label(string $network, ?Ax402_WC_Network_Catalog $catalog = null): string
+    public static function network_label(string $network, ?Launa_WC_Network_Catalog $catalog = null): string
     {
         $catalog ??= self::catalog();
         return $catalog->label($network);
@@ -40,34 +40,34 @@ final class Ax402_WC_Platform_Tokens
     /**
      * @return array<string, string>
      */
-    public static function rpc_urls(?Ax402_WC_Network_Catalog $catalog = null): array
+    public static function rpc_urls(?Launa_WC_Network_Catalog $catalog = null): array
     {
         $catalog ??= self::catalog();
         return $catalog->rpc_map();
     }
 
-    public static function rpc_url_for_network(string $network, ?Ax402_WC_Network_Catalog $catalog = null): string
+    public static function rpc_url_for_network(string $network, ?Launa_WC_Network_Catalog $catalog = null): string
     {
         $catalog ??= self::catalog();
         return $catalog->rpc_url($network);
     }
 
-    public static function explorer_url_for_network(string $network, ?Ax402_WC_Network_Catalog $catalog = null): string
+    public static function explorer_url_for_network(string $network, ?Launa_WC_Network_Catalog $catalog = null): string
     {
         $catalog ??= self::catalog();
         return $catalog->explorer_url($network);
     }
 
-    public static function catalog(?array $platform = null, ?array $supported = null): Ax402_WC_Network_Catalog
+    public static function catalog(?array $platform = null, ?array $supported = null): Launa_WC_Network_Catalog
     {
         if ($platform !== null) {
-            return Ax402_WC_Network_Catalog::from_platform($platform, $supported);
+            return Launa_WC_Network_Catalog::from_platform($platform, $supported);
         }
         if (function_exists('get_option')) {
-            return Ax402_WC_Network_Catalog::from_store();
+            return Launa_WC_Network_Catalog::from_store();
         }
 
-        return new Ax402_WC_Network_Catalog();
+        return new Launa_WC_Network_Catalog();
     }
 
     /**
@@ -79,7 +79,7 @@ final class Ax402_WC_Platform_Tokens
             return '';
         }
 
-        $id = Ax402_WC_Chain_Metadata::eip155_chain_id($network);
+        $id = Launa_WC_Chain_Metadata::eip155_chain_id($network);
         if ($id === null) {
             return '';
         }
@@ -256,7 +256,7 @@ final class Ax402_WC_Platform_Tokens
     }
 
     /**
-     * Ax402 uses eip155:845320402 as its Base Sepolia / development network id.
+     * Launa uses eip155:845320402 as its Base Sepolia / development network id.
      */
     public static function network_matches_mode(string $network, string $network_mode): bool
     {
@@ -301,10 +301,10 @@ final class Ax402_WC_Platform_Tokens
         array $enabled_token_ids,
         string $usd_total,
         string $scheme = 'exact',
-        ?Ax402_WC_Exchange_Rate_Provider $rates = null,
-        ?Ax402_WC_Network_Catalog $catalog = null
+        ?Launa_WC_Exchange_Rate_Provider $rates = null,
+        ?Launa_WC_Network_Catalog $catalog = null
     ): array {
-        $rates ??= Ax402_WC_Composite_Exchange_Rates::default();
+        $rates ??= Launa_WC_Composite_Exchange_Rates::default();
         $catalog ??= self::catalog($platform);
         $supported_networks = self::supported_networks_payload();
         $options = [];
@@ -328,24 +328,24 @@ final class Ax402_WC_Platform_Tokens
             }
 
             try {
-                $amount = Ax402_WC_Money::usd_to_token_amount($usd_total, $rate, $decimals);
-                $atomic = Ax402_WC_Money::to_atomic($amount, $decimals);
+                $amount = Launa_WC_Money::usd_to_token_amount($usd_total, $rate, $decimals);
+                $atomic = Launa_WC_Money::to_atomic($amount, $decimals);
                 $accept = self::build_accept($token, $atomic, $scheme, $supported_networks);
             } catch (Throwable $e) {
                 continue;
             }
 
-            $meta = Ax402_WC_Chain_Metadata::for_token($token);
+            $meta = Launa_WC_Chain_Metadata::for_token($token);
             $label = $meta['label'] !== '' ? $meta['label'] : $catalog->label($network);
             $rpc = $meta['rpc_url'] !== '' ? $meta['rpc_url'] : $catalog->rpc_url($network);
             $explorer = $meta['explorer_url'] !== '' ? $meta['explorer_url'] : $catalog->explorer_url($network);
             $is_hedera = self::is_hedera_network($network);
-            $is_stable = Ax402_WC_Stablecoin_One_To_One_Rates::is_stablecoin($symbol);
-            $rate_source = $is_stable ? 'stablecoin-1to1' : 'ax402-control-plane';
+            $is_stable = Launa_WC_Stablecoin_One_To_One_Rates::is_stablecoin($symbol);
+            $rate_source = $is_stable ? 'stablecoin-1to1' : 'launa-control-plane';
             $rate_date = '';
-            if (!$is_stable && $rates instanceof Ax402_WC_Composite_Exchange_Rates) {
+            if (!$is_stable && $rates instanceof Launa_WC_Composite_Exchange_Rates) {
                 $rate_date = $rates->last_rate_date();
-            } elseif (!$is_stable && $rates instanceof Ax402_WC_Control_Plane_Exchange_Rates) {
+            } elseif (!$is_stable && $rates instanceof Launa_WC_Control_Plane_Exchange_Rates) {
                 $rate_date = $rates->last_rate_date();
             }
 
@@ -491,11 +491,11 @@ final class Ax402_WC_Platform_Tokens
      */
     private static function supported_networks_payload(): ?array
     {
-        if (!class_exists('Ax402_WC_Platform_Config_Store') || !function_exists('get_option')) {
+        if (!class_exists('Launa_WC_Platform_Config_Store') || !function_exists('get_option')) {
             return null;
         }
 
-        $supported = Ax402_WC_Platform_Config_Store::get()['supported_networks'] ?? null;
+        $supported = Launa_WC_Platform_Config_Store::get()['supported_networks'] ?? null;
         return is_array($supported) ? $supported : null;
     }
 
@@ -558,6 +558,6 @@ final class Ax402_WC_Platform_Tokens
             }
         }
 
-        return (string) ($platform['platform_domain'] ?? 'x.ax402.io');
+        return (string) ($platform['platform_domain'] ?? 'x.launa.io');
     }
 }

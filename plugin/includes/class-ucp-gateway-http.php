@@ -4,14 +4,14 @@ declare(strict_types=1);
 defined('ABSPATH') || exit;
 
 /**
- * Server-side HTTP to an allowlisted Ax402 gateway URL (UCP complete only).
+ * Server-side HTTP to an allowlisted Launa gateway URL (UCP complete only).
  *
  * UCP complete may GET a challenge. It must not send PAYMENT-SIGNATURE
  * (binding §3.1.5 no-impersonation).
  *
- * Do not change {@see Ax402_WC_Gateway_Proxy_Controller} — that streams for humans.
+ * Do not change {@see Launa_WC_Gateway_Proxy_Controller} — that streams for humans.
  */
-final class Ax402_WC_Ucp_Gateway_Http
+final class Launa_WC_Ucp_Gateway_Http
 {
     public const FORWARD_REQUEST_HEADERS = [
         'payment-signature',
@@ -49,7 +49,9 @@ final class Ax402_WC_Ucp_Gateway_Http
             return true;
         }
 
-        return str_ends_with($host, '.ax402.io') || str_ends_with($host, '.localhost');
+        return str_ends_with($host, '.launa.io')
+            || str_ends_with($host, '.ax402.io')
+            || str_ends_with($host, '.localhost');
     }
 
     /**
@@ -82,11 +84,11 @@ final class Ax402_WC_Ucp_Gateway_Http
     public static function allowed_paths_for_order(WC_Order $order): array
     {
         $paths = [];
-        $primary = (string) $order->get_meta(Ax402_WC_Order_Payment::META_PATH);
+        $primary = (string) $order->get_meta(Launa_WC_Order_Payment::META_PATH);
         if ($primary !== '') {
             $paths[] = $primary;
         }
-        foreach (Ax402_WC_Order_Payment::settlement_options_from_order($order) as $option) {
+        foreach (Launa_WC_Order_Payment::settlement_options_from_order($order) as $option) {
             $path = (string) ($option['path'] ?? '');
             if ($path !== '') {
                 $paths[] = $path;

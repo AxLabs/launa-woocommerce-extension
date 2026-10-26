@@ -4,9 +4,9 @@ declare(strict_types=1);
 defined('ABSPATH') || exit;
 
 /**
- * Whether this store can take Ax402 payments (independent of Enable/Disable).
+ * Whether this store can take Launa payments (independent of Enable/Disable).
  */
-final class Ax402_WC_Settings_Readiness
+final class Launa_WC_Settings_Readiness
 {
     /**
      * @param array{
@@ -46,7 +46,7 @@ final class Ax402_WC_Settings_Readiness
     {
         $ctx = self::resolve_context($context);
         $needs_evm = self::needs_evm($ctx['platform'], $ctx['token_ids']);
-        $needs_hedera = Ax402_WC_Platform_Tokens::has_hedera_token_enabled(
+        $needs_hedera = Launa_WC_Platform_Tokens::has_hedera_token_enabled(
             $ctx['platform'],
             $ctx['token_ids']
         );
@@ -61,8 +61,8 @@ final class Ax402_WC_Settings_Readiness
             [
                 'id' => 'api_key',
                 'ok' => $ctx['api_key'] !== '',
-                'label' => __('Ax402 API Key is set', 'ax402-for-woocommerce'),
-                'fix' => __('Paste an Ax402 API Key in the Account section below.', 'ax402-for-woocommerce'),
+                'label' => __('Launa API Key is set', 'ax402-for-woocommerce'),
+                'fix' => __('Paste a Launa API Key in the Account section below.', 'ax402-for-woocommerce'),
             ],
             [
                 'id' => 'tokens',
@@ -75,14 +75,14 @@ final class Ax402_WC_Settings_Readiness
         if ($needs_evm) {
             $items[] = [
                 'id' => 'evm_wallet',
-                'ok' => Ax402_WC_Evm_Address::is_valid($ctx['pay_to_address']),
+                'ok' => Launa_WC_Evm_Address::is_valid($ctx['pay_to_address']),
                 'label' => __('EVM pay-to wallet is set', 'ax402-for-woocommerce'),
                 'fix' => __('Enter a valid EVM pay-to address in Payout wallets.', 'ax402-for-woocommerce'),
             ];
         }
 
         if ($needs_hedera) {
-            $parsed = Ax402_WC_Settings::parse_hedera_account_id($ctx['pay_to_hedera_account_id']);
+            $parsed = Launa_WC_Settings::parse_hedera_account_id($ctx['pay_to_hedera_account_id']);
             $items[] = [
                 'id' => 'hedera_wallet',
                 'ok' => $parsed['ok'] && $parsed['value'] !== '',
@@ -110,7 +110,7 @@ final class Ax402_WC_Settings_Readiness
             return true;
         }
 
-        return Ax402_WC_Platform_Tokens::has_evm_token_enabled($platform, $token_ids);
+        return Launa_WC_Platform_Tokens::has_evm_token_enabled($platform, $token_ids);
     }
 
     /**
@@ -135,16 +135,16 @@ final class Ax402_WC_Settings_Readiness
      */
     private static function resolve_context(?array $context): array
     {
-        $settings = ($context === null) ? Ax402_WC_Settings::all() : null;
+        $settings = ($context === null) ? Launa_WC_Settings::all() : null;
         $platform = is_array($context['platform'] ?? null)
             ? $context['platform']
-            : (($settings !== null && class_exists(Ax402_WC_Platform_Config_Store::class))
-                ? Ax402_WC_Platform_Config_Store::platform()
+            : (($settings !== null && class_exists(Launa_WC_Platform_Config_Store::class))
+                ? Launa_WC_Platform_Config_Store::platform()
                 : []);
 
         $token_ids = $context['token_ids'] ?? null;
         if (!is_array($token_ids)) {
-            $token_ids = $settings !== null ? Ax402_WC_Settings::enabled_token_ids($platform) : [];
+            $token_ids = $settings !== null ? Launa_WC_Settings::enabled_token_ids($platform) : [];
         }
 
         $currency = $context['currency'] ?? (function_exists('get_woocommerce_currency')

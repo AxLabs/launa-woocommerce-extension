@@ -1,8 +1,8 @@
 <?php
 /**
- * Plugin Name: Ax402 for WooCommerce
- * Plugin URI: https://ax402.io
- * Description: Accept x402 / Ax402 stablecoin payments in WooCommerce for humans and agents.
+ * Plugin Name: Launa for WooCommerce
+ * Plugin URI: https://launa.io
+ * Description: Accept x402 / Launa stablecoin payments in WooCommerce for humans and agents.
  * Version: 0.4.3
  * Author: AxLabs
  * Author URI: https://axlabs.com
@@ -23,68 +23,71 @@ declare(strict_types=1);
 
 defined('ABSPATH') || exit;
 
-define('AX402_WC_VERSION', '0.4.3');
-define('AX402_WC_PLUGIN_FILE', __FILE__);
-define('AX402_WC_PLUGIN_DIR', plugin_dir_path(__FILE__));
-define('AX402_WC_PLUGIN_URL', plugin_dir_url(__FILE__));
-define('AX402_WC_PLUGIN_BASENAME', plugin_basename(__FILE__));
+define('LAUNA_WC_VERSION', '0.4.3');
+define('LAUNA_WC_PLUGIN_FILE', __FILE__);
+define('LAUNA_WC_PLUGIN_DIR', plugin_dir_path(__FILE__));
+define('LAUNA_WC_PLUGIN_URL', plugin_dir_url(__FILE__));
+define('LAUNA_WC_PLUGIN_BASENAME', plugin_basename(__FILE__));
 
-require_once AX402_WC_PLUGIN_DIR . 'includes/class-autoloader.php';
-Ax402_WC_Autoloader::register();
+require_once LAUNA_WC_PLUGIN_DIR . 'includes/class-autoloader.php';
+Launa_WC_Autoloader::register();
 
 /**
  * Activation hook.
  */
-function ax402_wc_activate(): void
+function launa_wc_activate(): void
 {
     if (!class_exists('WooCommerce')) {
-        deactivate_plugins(AX402_WC_PLUGIN_BASENAME);
+        deactivate_plugins(LAUNA_WC_PLUGIN_BASENAME);
         wp_die(
-            esc_html__('Ax402 for WooCommerce requires WooCommerce to be active.', 'ax402-for-woocommerce'),
+            esc_html__('Launa for WooCommerce requires WooCommerce to be active.', 'ax402-for-woocommerce'),
             esc_html__('Plugin dependency check', 'ax402-for-woocommerce'),
             ['back_link' => true]
         );
     }
 
-    if (!wp_next_scheduled('ax402_wc_prune_endpoints')) {
-        wp_schedule_event(time() + HOUR_IN_SECONDS, 'hourly', 'ax402_wc_prune_endpoints');
+    Launa_WC_Upgrade::maybe_run();
+
+    if (!wp_next_scheduled('launa_wc_prune_endpoints')) {
+        wp_schedule_event(time() + HOUR_IN_SECONDS, 'hourly', 'launa_wc_prune_endpoints');
     }
 
     flush_rewrite_rules();
 }
-register_activation_hook(__FILE__, 'ax402_wc_activate');
+register_activation_hook(__FILE__, 'launa_wc_activate');
 
 /**
  * Deactivation hook.
  */
-function ax402_wc_deactivate(): void
+function launa_wc_deactivate(): void
 {
-    $timestamp = wp_next_scheduled('ax402_wc_prune_endpoints');
+    $timestamp = wp_next_scheduled('launa_wc_prune_endpoints');
     if ($timestamp) {
-        wp_unschedule_event($timestamp, 'ax402_wc_prune_endpoints');
+        wp_unschedule_event($timestamp, 'launa_wc_prune_endpoints');
     }
     flush_rewrite_rules();
 }
-register_deactivation_hook(__FILE__, 'ax402_wc_deactivate');
+register_deactivation_hook(__FILE__, 'launa_wc_deactivate');
 
 /**
  * Boot the plugin after all plugins are loaded.
  */
-function ax402_wc_init(): void
+function launa_wc_init(): void
 {
     if (!class_exists('WooCommerce')) {
         add_action('admin_notices', static function (): void {
             echo '<div class="notice notice-error"><p>';
-            echo esc_html__('Ax402 for WooCommerce requires WooCommerce.', 'ax402-for-woocommerce');
+            echo esc_html__('Launa for WooCommerce requires WooCommerce.', 'ax402-for-woocommerce');
             echo '</p></div>';
         });
         return;
     }
 
-    $GLOBALS['ax402_wc'] = Ax402_WC_Plugin::instance();
+    Launa_WC_Upgrade::maybe_run();
+    $GLOBALS['launa_wc'] = Launa_WC_Plugin::instance();
 }
 // Priority 11: after WooCommerce (typically 10) but early enough for Blocks hooks.
-add_action('plugins_loaded', 'ax402_wc_init', 11);
+add_action('plugins_loaded', 'launa_wc_init', 11);
 
 /**
  * Declare WooCommerce feature compatibility.
@@ -93,12 +96,12 @@ add_action('before_woocommerce_init', static function (): void {
     if (class_exists(\Automattic\WooCommerce\Utilities\FeaturesUtil::class)) {
         \Automattic\WooCommerce\Utilities\FeaturesUtil::declare_compatibility(
             'cart_checkout_blocks',
-            AX402_WC_PLUGIN_FILE,
+            LAUNA_WC_PLUGIN_FILE,
             true
         );
         \Automattic\WooCommerce\Utilities\FeaturesUtil::declare_compatibility(
             'custom_order_tables',
-            AX402_WC_PLUGIN_FILE,
+            LAUNA_WC_PLUGIN_FILE,
             true
         );
     }

@@ -1,9 +1,9 @@
 <?php
 declare(strict_types=1);
 
-namespace Ax402\WC\Tests\Unit;
+namespace Launa\WC\Tests\Unit;
 
-use Ax402_WC_Store_Onboarding;
+use Launa_WC_Store_Onboarding;
 use PHPUnit\Framework\TestCase;
 
 final class StoreOnboardingTest extends TestCase
@@ -39,7 +39,7 @@ final class StoreOnboardingTest extends TestCase
 
     public function test_mixed_tokens_use_pay_to_addresses(): void
     {
-        $config = Ax402_WC_Store_Onboarding::recipient_config(
+        $config = Launa_WC_Store_Onboarding::recipient_config(
             $this->platform(),
             ['eip155:8453:0xusdc', 'hedera:mainnet:0.0.456858'],
             '0x1111111111111111111111111111111111111111',
@@ -58,7 +58,7 @@ final class StoreOnboardingTest extends TestCase
 
     public function test_evm_only_has_empty_pay_to_map(): void
     {
-        $config = Ax402_WC_Store_Onboarding::recipient_config(
+        $config = Launa_WC_Store_Onboarding::recipient_config(
             $this->platform(),
             ['eip155:8453:0xusdc'],
             '0xabc',
@@ -73,7 +73,7 @@ final class StoreOnboardingTest extends TestCase
 
     public function test_hedera_only_uses_account_as_pay_to_address(): void
     {
-        $config = Ax402_WC_Store_Onboarding::recipient_config(
+        $config = Launa_WC_Store_Onboarding::recipient_config(
             $this->platform(),
             ['hedera:mainnet:0.0.456858'],
             '0xabc',

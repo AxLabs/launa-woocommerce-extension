@@ -1,16 +1,16 @@
 <?php
 declare(strict_types=1);
 
-namespace Ax402\WC\Tests\Live;
+namespace Launa\WC\Tests\Live;
 
-use Ax402_WC_Control_Plane_Client;
-use Ax402_WC_Money;
-use Ax402_WC_Platform_Tokens;
+use Launa_WC_Control_Plane_Client;
+use Launa_WC_Money;
+use Launa_WC_Platform_Tokens;
 use PHPUnit\Framework\TestCase;
 use Throwable;
 
 /**
- * Hits the public Ax402 control plane. Requires AX402_API_KEY.
+ * Hits the public Launa control plane. Requires LAUNA_API_KEY or AX402_API_KEY.
  */
 final class ControlPlaneSmokeTest extends TestCase
 {
@@ -19,10 +19,10 @@ final class ControlPlaneSmokeTest extends TestCase
 
     protected function setUp(): void
     {
-        $this->apiKey = (string) getenv('AX402_API_KEY');
-        $this->baseUrl = (string) (getenv('AX402_BASE_URL') ?: 'https://api.ax402.io');
+        $this->apiKey = $this->env_value('LAUNA_API_KEY', 'AX402_API_KEY');
+        $this->baseUrl = $this->env_value('LAUNA_BASE_URL', 'AX402_BASE_URL', 'https://api.launa.io');
         if ($this->apiKey === '') {
-            $this->markTestSkipped('AX402_API_KEY not set');
+            $this->markTestSkipped('LAUNA_API_KEY or AX402_API_KEY not set');
         }
     }
 
@@ -39,25 +39,25 @@ final class ControlPlaneSmokeTest extends TestCase
 
     public function test_create_and_delete_temp_api_endpoint(): void
     {
-        $payTo = (string) (getenv('AX402_PAY_TO_ADDRESS') ?: '');
+        $payTo = $this->env_value('LAUNA_PAY_TO_ADDRESS', 'AX402_PAY_TO_ADDRESS');
         if ($payTo === '' || !preg_match('/^0x[a-fA-F0-9]{40}$/', $payTo)) {
-            $this->markTestSkipped('AX402_PAY_TO_ADDRESS not set');
+            $this->markTestSkipped('LAUNA_PAY_TO_ADDRESS or AX402_PAY_TO_ADDRESS not set');
         }
 
         $client = $this->client();
         $platform = $client->get_platform_config();
         // Prefer Base mainnet USDC for live CRUD smoke — some accounts reject
         // eip155:845320402 until the sep/dev facilitator is enabled for the seller.
-        $network = Ax402_WC_Platform_Tokens::NETWORK_BASE_MAINNET;
+        $network = Launa_WC_Platform_Tokens::NETWORK_BASE_MAINNET;
         try {
-            $token = Ax402_WC_Platform_Tokens::find_usdc_token($platform, $network);
+            $token = Launa_WC_Platform_Tokens::find_usdc_token($platform, $network);
         } catch (Throwable $e) {
-            $network = Ax402_WC_Platform_Tokens::NETWORK_SEPOLIA;
-            $token = Ax402_WC_Platform_Tokens::find_usdc_token($platform, $network);
+            $network = Launa_WC_Platform_Tokens::NETWORK_SEPOLIA;
+            $token = Launa_WC_Platform_Tokens::find_usdc_token($platform, $network);
         }
-        $accept = Ax402_WC_Platform_Tokens::build_accept(
+        $accept = Launa_WC_Platform_Tokens::build_accept(
             $token,
-            Ax402_WC_Money::usdc_to_atomic('0.01'),
+            Launa_WC_Money::usdc_to_atomic('0.01'),
             'exact'
         );
 
@@ -75,7 +75,7 @@ final class ControlPlaneSmokeTest extends TestCase
             $endpoint = $client->create_endpoint(
                 (string) $api['id'],
                 'GET',
-                '/wp-json/ax402/v1/fulfill/wc_order_test/abcd',
+                '/wp-json/launa/v1/fulfill/wc_order_test/abcd',
                 [$accept],
                 'phpunit temp',
                 null,
@@ -93,9 +93,9 @@ final class ControlPlaneSmokeTest extends TestCase
 
     public function test_mixed_family_api_and_multi_accept_amounts(): void
     {
-        $payTo = (string) (getenv('AX402_PAY_TO_ADDRESS') ?: '');
+        $payTo = $this->env_value('LAUNA_PAY_TO_ADDRESS', 'AX402_PAY_TO_ADDRESS');
         if ($payTo === '' || !preg_match('/^0x[a-fA-F0-9]{40}$/', $payTo)) {
-            $this->markTestSkipped('AX402_PAY_TO_ADDRESS not set');
+            $this->markTestSkipped('LAUNA_PAY_TO_ADDRESS or AX402_PAY_TO_ADDRESS not set');
         }
 
         $client = $this->client();
@@ -106,7 +106,7 @@ final class ControlPlaneSmokeTest extends TestCase
             $this->markTestSkipped('Platform is missing Base USDC or ZCHF');
         }
 
-        $hederaPayTo = trim((string) (getenv('AX402_PAY_TO_HEDERA_ACCOUNT_ID') ?: ''));
+        $hederaPayTo = $this->env_value('LAUNA_PAY_TO_HEDERA_ACCOUNT_ID', 'AX402_PAY_TO_HEDERA_ACCOUNT_ID');
         $husdc = $this->find_token($platform, 'USDC', 'hedera:mainnet');
         $accepted = [(string) $usdc['id'], (string) $zchf['id']];
         $payToAddresses = [];
@@ -140,8 +140,8 @@ final class ControlPlaneSmokeTest extends TestCase
                 'GET',
                 $path,
                 [
-                    Ax402_WC_Platform_Tokens::build_accept($usdc, $usdcAmount, 'exact'),
-                    Ax402_WC_Platform_Tokens::build_accept($zchf, $zchfAmount, 'exact'),
+                    Launa_WC_Platform_Tokens::build_accept($usdc, $usdcAmount, 'exact'),
+                    Launa_WC_Platform_Tokens::build_accept($zchf, $zchfAmount, 'exact'),
                 ],
                 'phpunit multi-accept',
                 null,
@@ -181,9 +181,9 @@ final class ControlPlaneSmokeTest extends TestCase
         }
     }
 
-    private function client(): Ax402_WC_Control_Plane_Client
+    private function client(): Launa_WC_Control_Plane_Client
     {
-        return new Ax402_WC_Control_Plane_Client($this->baseUrl, $this->apiKey, $this->transport());
+        return new Launa_WC_Control_Plane_Client($this->baseUrl, $this->apiKey, $this->transport());
     }
 
     /**
@@ -235,7 +235,7 @@ final class ControlPlaneSmokeTest extends TestCase
      */
     private function find_token(array $platform, string $symbol, string $network): ?array
     {
-        foreach (Ax402_WC_Platform_Tokens::enabled_tokens($platform) as $token) {
+        foreach (Launa_WC_Platform_Tokens::enabled_tokens($platform) as $token) {
             if (
                 strtoupper((string) ($token['symbol'] ?? '')) === strtoupper($symbol)
                 && (string) ($token['network'] ?? '') === $network
@@ -264,7 +264,7 @@ final class ControlPlaneSmokeTest extends TestCase
             }
         }
 
-        return $slug . '.x.ax402.io';
+        return $slug . '.x.launa.io';
     }
 
     /**
@@ -319,5 +319,17 @@ final class ControlPlaneSmokeTest extends TestCase
         }
 
         return is_array($legacyHeaders) ? array_values($legacyHeaders) : [];
+    }
+
+    private function env_value(string $primary, string $legacy, string $default = ''): string
+    {
+        foreach ([$primary, $legacy] as $name) {
+            $value = getenv($name);
+            if (is_string($value) && trim($value) !== '') {
+                return trim($value);
+            }
+        }
+
+        return $default;
     }
 }

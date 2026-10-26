@@ -6,10 +6,10 @@ defined('ABSPATH') || exit;
 /**
  * UCP checkout-session create / get / update / cancel.
  *
- * Ax402 prepare() runs only when the session is ready_for_complete so shipping
+ * Launa prepare() runs only when the session is ready_for_complete so shipping
  * and tax are in the charged total.
  */
-final class Ax402_WC_Ucp_Checkout
+final class Launa_WC_Ucp_Checkout
 {
     /**
      * @param array<string, mixed> $body
@@ -17,12 +17,12 @@ final class Ax402_WC_Ucp_Checkout
     public function create(array $body): WP_REST_Response|WP_Error
     {
         if (get_woocommerce_currency() !== 'USD') {
-            return Ax402_WC_Ucp_Response::rest_error(
+            return Launa_WC_Ucp_Response::rest_error(
                 200,
-                [Ax402_WC_Ucp_Response::message(
+                [Launa_WC_Ucp_Response::message(
                     'error',
                     'unsupported_currency',
-                    'Store currency must be USD for Ax402 UCP checkout.',
+                    'Store currency must be USD for Launa UCP checkout.',
                     'unrecoverable'
                 )]
             );
@@ -35,31 +35,31 @@ final class Ax402_WC_Ucp_Checkout
 
         $line_items = $body['line_items'] ?? null;
         if (!is_array($line_items) || $line_items === []) {
-            return Ax402_WC_Ucp_Response::rest_error(
+            return Launa_WC_Ucp_Response::rest_error(
                 400,
-                [Ax402_WC_Ucp_Response::message('error', 'invalid', 'line_items is required', 'unrecoverable')]
+                [Launa_WC_Ucp_Response::message('error', 'invalid', 'line_items is required', 'unrecoverable')]
             );
         }
 
         $order = wc_create_order();
         if (is_wp_error($order) || !$order instanceof WC_Order) {
-            return new WP_Error('ax402_ucp_create', 'Could not create checkout session', ['status' => 500]);
+            return new WP_Error('launa_ucp_create', 'Could not create checkout session', ['status' => 500]);
         }
 
         try {
-            Ax402_WC_Ucp_Lines::replace($order, $line_items);
-            Ax402_WC_Ucp_Lines::apply_buyer($order, is_array($body['buyer'] ?? null) ? $body['buyer'] : []);
+            Launa_WC_Ucp_Lines::replace($order, $line_items);
+            Launa_WC_Ucp_Lines::apply_buyer($order, is_array($body['buyer'] ?? null) ? $body['buyer'] : []);
             if (isset($body['fulfillment']) && is_array($body['fulfillment'])) {
-                Ax402_WC_Ucp_Fulfillment::apply_request($order, $body['fulfillment']);
+                Launa_WC_Ucp_Fulfillment::apply_request($order, $body['fulfillment']);
             }
 
-            $order->set_payment_method(Ax402_WC_Gateway_Ax402::GATEWAY_ID);
-            $order->set_payment_method_title('Ax402');
-            $order->update_meta_data(Ax402_WC_Ucp_Mapper::META_UCP, '1');
-            Ax402_WC_Ucp_Kind::set($order, Ax402_WC_Ucp_Kind::CHECKOUT);
-            Ax402_WC_Ucp_Fulfillment::sync_shipping($order);
+            $order->set_payment_method(Launa_WC_Gateway_Launa::GATEWAY_ID);
+            $order->set_payment_method_title('Launa');
+            $order->update_meta_data(Launa_WC_Ucp_Mapper::META_UCP, '1');
+            Launa_WC_Ucp_Kind::set($order, Launa_WC_Ucp_Kind::CHECKOUT);
+            Launa_WC_Ucp_Fulfillment::sync_shipping($order);
             $order->calculate_totals();
-            $order->update_status('pending', __('UCP checkout session awaiting Ax402 payment.', 'ax402-for-woocommerce'));
+            $order->update_status('pending', __('UCP checkout session awaiting Launa payment.', 'ax402-for-woocommerce'));
 
             $this->maybe_prepare($order);
             $this->apply_payment_preference($order, $body);
@@ -69,16 +69,16 @@ final class Ax402_WC_Ucp_Checkout
             $code = str_contains($e->getMessage(), 'not available')
                 ? 'payment_method_not_available'
                 : 'invalid';
-            return Ax402_WC_Ucp_Response::rest_error(
+            return Launa_WC_Ucp_Response::rest_error(
                 200,
-                [Ax402_WC_Ucp_Response::message('error', $code, $e->getMessage(), $code === 'invalid' ? 'unrecoverable' : 'recoverable')]
+                [Launa_WC_Ucp_Response::message('error', $code, $e->getMessage(), $code === 'invalid' ? 'unrecoverable' : 'recoverable')]
             );
         } catch (Throwable $e) {
             $order->delete(true);
             self::log_failure('create', $e);
-            return Ax402_WC_Ucp_Response::rest_error(
+            return Launa_WC_Ucp_Response::rest_error(
                 500,
-                [Ax402_WC_Ucp_Response::message(
+                [Launa_WC_Ucp_Response::message(
                     'error',
                     'processing_error',
                     'Could not create the checkout session.',
@@ -87,26 +87,26 @@ final class Ax402_WC_Ucp_Checkout
             );
         }
 
-        return new WP_REST_Response(Ax402_WC_Ucp_Mapper::session($order), 201);
+        return new WP_REST_Response(Launa_WC_Ucp_Mapper::session($order), 201);
     }
 
     public function get(string $session_id): WP_REST_Response|WP_Error
     {
         $order = self::order_from_session($session_id);
         if (!$order instanceof WC_Order) {
-            return Ax402_WC_Ucp_Response::rest_error(
+            return Launa_WC_Ucp_Response::rest_error(
                 404,
-                [Ax402_WC_Ucp_Response::message('error', 'not_found', 'Checkout session not found.', 'unrecoverable')]
+                [Launa_WC_Ucp_Response::message('error', 'not_found', 'Checkout session not found.', 'unrecoverable')]
             );
         }
 
-        Ax402_WC_Settlement_Reconcile::reconcile_order($order, null, true);
+        Launa_WC_Settlement_Reconcile::reconcile_order($order, null, true);
         $fresh = wc_get_order($order->get_id());
         if ($fresh instanceof WC_Order) {
             $order = $fresh;
         }
 
-        return new WP_REST_Response(Ax402_WC_Ucp_Mapper::session($order), 200);
+        return new WP_REST_Response(Launa_WC_Ucp_Mapper::session($order), 200);
     }
 
     /**
@@ -116,18 +116,18 @@ final class Ax402_WC_Ucp_Checkout
     {
         $order = self::order_from_session($session_id);
         if (!$order instanceof WC_Order) {
-            return Ax402_WC_Ucp_Response::rest_error(
+            return Launa_WC_Ucp_Response::rest_error(
                 404,
-                [Ax402_WC_Ucp_Response::message('error', 'not_found', 'Checkout session not found.', 'unrecoverable')]
+                [Launa_WC_Ucp_Response::message('error', 'not_found', 'Checkout session not found.', 'unrecoverable')]
             );
         }
         if ($order->is_paid()) {
-            return new WP_REST_Response(Ax402_WC_Ucp_Mapper::session($order), 200);
+            return new WP_REST_Response(Launa_WC_Ucp_Mapper::session($order), 200);
         }
         if ($order->has_status(['cancelled', 'canceled'])) {
-            return Ax402_WC_Ucp_Response::rest_error(
+            return Launa_WC_Ucp_Response::rest_error(
                 409,
-                [Ax402_WC_Ucp_Response::message('error', 'canceled', 'Checkout session is canceled.', 'unrecoverable')],
+                [Launa_WC_Ucp_Response::message('error', 'canceled', 'Checkout session is canceled.', 'unrecoverable')],
                 'dev.ucp.shopping.checkout',
                 ['id' => $session_id]
             );
@@ -135,15 +135,15 @@ final class Ax402_WC_Ucp_Checkout
 
         try {
             if (isset($body['line_items']) && is_array($body['line_items']) && $body['line_items'] !== []) {
-                Ax402_WC_Ucp_Lines::replace($order, $body['line_items']);
+                Launa_WC_Ucp_Lines::replace($order, $body['line_items']);
             }
             if (isset($body['buyer']) && is_array($body['buyer'])) {
-                Ax402_WC_Ucp_Lines::apply_buyer($order, $body['buyer']);
+                Launa_WC_Ucp_Lines::apply_buyer($order, $body['buyer']);
             }
             if (isset($body['fulfillment']) && is_array($body['fulfillment'])) {
-                Ax402_WC_Ucp_Fulfillment::apply_request($order, $body['fulfillment']);
+                Launa_WC_Ucp_Fulfillment::apply_request($order, $body['fulfillment']);
             }
-            Ax402_WC_Ucp_Fulfillment::sync_shipping($order);
+            Launa_WC_Ucp_Fulfillment::sync_shipping($order);
             $order->calculate_totals();
             $this->maybe_prepare($order);
             $this->apply_payment_preference($order, $body);
@@ -152,15 +152,15 @@ final class Ax402_WC_Ucp_Checkout
             $code = str_contains($e->getMessage(), 'not available')
                 ? 'payment_method_not_available'
                 : 'invalid';
-            return Ax402_WC_Ucp_Response::rest_error(
+            return Launa_WC_Ucp_Response::rest_error(
                 200,
-                [Ax402_WC_Ucp_Response::message('error', $code, $e->getMessage(), 'recoverable')]
+                [Launa_WC_Ucp_Response::message('error', $code, $e->getMessage(), 'recoverable')]
             );
         } catch (Throwable $e) {
             self::log_failure('update', $e);
-            return Ax402_WC_Ucp_Response::rest_error(
+            return Launa_WC_Ucp_Response::rest_error(
                 500,
-                [Ax402_WC_Ucp_Response::message(
+                [Launa_WC_Ucp_Response::message(
                     'error',
                     'processing_error',
                     'Could not update the checkout session.',
@@ -169,22 +169,22 @@ final class Ax402_WC_Ucp_Checkout
             );
         }
 
-        return new WP_REST_Response(Ax402_WC_Ucp_Mapper::session($order), 200);
+        return new WP_REST_Response(Launa_WC_Ucp_Mapper::session($order), 200);
     }
 
     public function cancel(string $session_id): WP_REST_Response|WP_Error
     {
         $order = self::order_from_session($session_id);
         if (!$order instanceof WC_Order) {
-            return Ax402_WC_Ucp_Response::rest_error(
+            return Launa_WC_Ucp_Response::rest_error(
                 404,
-                [Ax402_WC_Ucp_Response::message('error', 'not_found', 'Checkout session not found.', 'unrecoverable')]
+                [Launa_WC_Ucp_Response::message('error', 'not_found', 'Checkout session not found.', 'unrecoverable')]
             );
         }
         if ($order->is_paid()) {
-            return Ax402_WC_Ucp_Response::rest_error(
+            return Launa_WC_Ucp_Response::rest_error(
                 409,
-                [Ax402_WC_Ucp_Response::message('error', 'conflict', 'Paid sessions cannot be canceled.', 'unrecoverable')]
+                [Launa_WC_Ucp_Response::message('error', 'conflict', 'Paid sessions cannot be canceled.', 'unrecoverable')]
             );
         }
         if (!$order->has_status(['cancelled', 'canceled'])) {
@@ -196,7 +196,7 @@ final class Ax402_WC_Ucp_Checkout
             $order = $fresh;
         }
 
-        return new WP_REST_Response(Ax402_WC_Ucp_Mapper::session($order), 200);
+        return new WP_REST_Response(Launa_WC_Ucp_Mapper::session($order), 200);
     }
 
     public static function order_from_key(string $session_id): ?WC_Order
@@ -209,7 +209,7 @@ final class Ax402_WC_Ucp_Checkout
         if (!$order instanceof WC_Order) {
             return null;
         }
-        if ($order->get_payment_method() !== Ax402_WC_Gateway_Ax402::GATEWAY_ID) {
+        if ($order->get_payment_method() !== Launa_WC_Gateway_Launa::GATEWAY_ID) {
             return null;
         }
 
@@ -222,7 +222,7 @@ final class Ax402_WC_Ucp_Checkout
         if (!$order instanceof WC_Order) {
             return null;
         }
-        if (Ax402_WC_Ucp_Kind::is_cart($order)) {
+        if (Launa_WC_Ucp_Kind::is_cart($order)) {
             return null;
         }
 
@@ -234,28 +234,28 @@ final class Ax402_WC_Ucp_Checkout
      */
     public function create_from_cart(string $cart_id): WP_REST_Response|WP_Error
     {
-        $order = Ax402_WC_Ucp_Cart::from_id($cart_id);
+        $order = Launa_WC_Ucp_Cart::from_id($cart_id);
         if (!$order instanceof WC_Order || $order->has_status(['cancelled', 'canceled', 'refunded', 'failed'])) {
-            return Ax402_WC_Ucp_Response::rest_error(
+            return Launa_WC_Ucp_Response::rest_error(
                 404,
-                [Ax402_WC_Ucp_Response::message('error', 'not_found', 'Cart not found.', 'unrecoverable')]
+                [Launa_WC_Ucp_Response::message('error', 'not_found', 'Cart not found.', 'unrecoverable')]
             );
         }
 
-        $was_cart = Ax402_WC_Ucp_Kind::is_cart($order);
+        $was_cart = Launa_WC_Ucp_Kind::is_cart($order);
         if ($was_cart && !$order->is_paid()) {
-            Ax402_WC_Ucp_Kind::set($order, Ax402_WC_Ucp_Kind::CHECKOUT);
+            Launa_WC_Ucp_Kind::set($order, Launa_WC_Ucp_Kind::CHECKOUT);
             $this->maybe_prepare($order);
             $order->save();
         }
 
-        Ax402_WC_Settlement_Reconcile::reconcile_order($order, null, true);
+        Launa_WC_Settlement_Reconcile::reconcile_order($order, null, true);
         $fresh = wc_get_order($order->get_id());
         if ($fresh instanceof WC_Order) {
             $order = $fresh;
         }
 
-        return new WP_REST_Response(Ax402_WC_Ucp_Mapper::session($order), $was_cart ? 201 : 200);
+        return new WP_REST_Response(Launa_WC_Ucp_Mapper::session($order), $was_cart ? 201 : 200);
     }
 
     /**
@@ -272,54 +272,54 @@ final class Ax402_WC_Ucp_Checkout
             return;
         }
 
-        $instrument = Ax402_WC_Ucp_Asset_Match::preferred_instrument($instruments);
-        if (!Ax402_WC_Ucp_Asset_Match::has_preference($instrument)) {
+        $instrument = Launa_WC_Ucp_Asset_Match::preferred_instrument($instruments);
+        if (!Launa_WC_Ucp_Asset_Match::has_preference($instrument)) {
             return;
         }
 
-        $options = Ax402_WC_Order_Payment::settlement_options_from_order($order);
+        $options = Launa_WC_Order_Payment::settlement_options_from_order($order);
         if ($options === []) {
             $identity = trim((string) ($instrument['id'] ?? $instrument['token_id'] ?? $instrument['tokenId'] ?? ''));
             if ($identity !== '') {
-                Ax402_WC_Order_Payment::remember_preferred_token($order, $identity);
+                Launa_WC_Order_Payment::remember_preferred_token($order, $identity);
             }
 
             return;
         }
 
-        $matched = Ax402_WC_Ucp_Asset_Match::match($options, $instrument);
+        $matched = Launa_WC_Ucp_Asset_Match::match($options, $instrument);
         if ($matched === null) {
-            $pairs = Ax402_WC_Ucp_Asset_Match::available_pairs($options);
+            $pairs = Launa_WC_Ucp_Asset_Match::available_pairs($options);
             throw new InvalidArgumentException(
                 'Requested network/asset is not available. Available: ' . wp_json_encode($pairs)
             );
         }
 
-        Ax402_WC_Order_Payment::remember_preferred_token(
+        Launa_WC_Order_Payment::remember_preferred_token(
             $order,
             (string) ($matched['tokenId'] ?? '')
         );
     }
 
     /**
-     * Prepare Ax402 endpoints only for a final, ready total.
+     * Prepare Launa endpoints only for a final, ready total.
      */
     public function maybe_prepare(WC_Order $order): void
     {
-        $computed = Ax402_WC_Ucp_Mapper::status_for_order($order);
-        if ($computed['status'] !== Ax402_WC_Ucp_Status::READY) {
+        $computed = Launa_WC_Ucp_Mapper::status_for_order($order);
+        if ($computed['status'] !== Launa_WC_Ucp_Status::READY) {
             return;
         }
 
-        $current = Ax402_WC_Money::normalize_order_total($order->get_total());
-        $prepared = (string) $order->get_meta(Ax402_WC_Ucp_Mapper::META_PREPARED_TOTAL);
-        $options = Ax402_WC_Order_Payment::settlement_options_from_order($order);
+        $current = Launa_WC_Money::normalize_order_total($order->get_total());
+        $prepared = (string) $order->get_meta(Launa_WC_Ucp_Mapper::META_PREPARED_TOTAL);
+        $options = Launa_WC_Order_Payment::settlement_options_from_order($order);
         if ($prepared === $current && $options !== []) {
             return;
         }
 
-        Ax402_WC_Order_Payment::prepare($order);
-        $order->update_meta_data(Ax402_WC_Ucp_Mapper::META_PREPARED_TOTAL, $current);
+        Launa_WC_Order_Payment::prepare($order);
+        $order->update_meta_data(Launa_WC_Ucp_Mapper::META_PREPARED_TOTAL, $current);
         $order->save();
     }
 
@@ -328,7 +328,7 @@ final class Ax402_WC_Ucp_Checkout
         if (function_exists('wc_get_logger')) {
             wc_get_logger()->error(
                 'UCP checkout ' . $op . ': ' . $e->getMessage(),
-                ['source' => 'ax402-ucp']
+                ['source' => 'launa-ucp']
             );
         }
     }

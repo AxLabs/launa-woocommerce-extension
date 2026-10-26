@@ -1,9 +1,9 @@
 <?php
 declare(strict_types=1);
 
-namespace Ax402\WC\Tests\Unit;
+namespace Launa\WC\Tests\Unit;
 
-use Ax402_WC_Settings_Readiness;
+use Launa_WC_Settings_Readiness;
 use PHPUnit\Framework\TestCase;
 
 final class SettingsReadinessTest extends TestCase
@@ -36,7 +36,7 @@ final class SettingsReadinessTest extends TestCase
     {
         return [
             'currency' => 'USD',
-            'api_key' => 'ax402_live_test',
+            'api_key' => 'launa_live_test',
             'pay_to_address' => '0x1111111111111111111111111111111111111111',
             'pay_to_hedera_account_id' => '',
             'walletconnect_project_id' => '',
@@ -47,8 +47,8 @@ final class SettingsReadinessTest extends TestCase
 
     public function test_ready_ignores_gateway_enabled_flag(): void
     {
-        $this->assertTrue(Ax402_WC_Settings_Readiness::is_ready($this->readyContext()));
-        $ids = array_column(Ax402_WC_Settings_Readiness::items($this->readyContext()), 'id');
+        $this->assertTrue(Launa_WC_Settings_Readiness::is_ready($this->readyContext()));
+        $ids = array_column(Launa_WC_Settings_Readiness::items($this->readyContext()), 'id');
         $this->assertNotContains('hedera_wallet', $ids);
         $this->assertNotContains('walletconnect', $ids);
     }
@@ -57,8 +57,8 @@ final class SettingsReadinessTest extends TestCase
     {
         $ctx = $this->readyContext();
         $ctx['currency'] = 'EUR';
-        $this->assertFalse(Ax402_WC_Settings_Readiness::is_ready($ctx));
-        $ids = array_column(Ax402_WC_Settings_Readiness::items($ctx), 'id');
+        $this->assertFalse(Launa_WC_Settings_Readiness::is_ready($ctx));
+        $ids = array_column(Launa_WC_Settings_Readiness::items($ctx), 'id');
         $this->assertContains('currency', $ids);
     }
 
@@ -66,14 +66,14 @@ final class SettingsReadinessTest extends TestCase
     {
         $ctx = $this->readyContext();
         $ctx['api_key'] = '';
-        $this->assertFalse(Ax402_WC_Settings_Readiness::is_ready($ctx));
+        $this->assertFalse(Launa_WC_Settings_Readiness::is_ready($ctx));
     }
 
     public function test_missing_evm_wallet(): void
     {
         $ctx = $this->readyContext();
         $ctx['pay_to_address'] = '';
-        $this->assertFalse(Ax402_WC_Settings_Readiness::is_ready($ctx));
+        $this->assertFalse(Launa_WC_Settings_Readiness::is_ready($ctx));
     }
 
     public function test_empty_platform_requires_evm_wallet(): void
@@ -81,8 +81,8 @@ final class SettingsReadinessTest extends TestCase
         $ctx = $this->readyContext();
         $ctx['platform'] = [];
         $ctx['pay_to_address'] = '';
-        $this->assertFalse(Ax402_WC_Settings_Readiness::is_ready($ctx));
-        $ids = array_column(Ax402_WC_Settings_Readiness::items($ctx), 'id');
+        $this->assertFalse(Launa_WC_Settings_Readiness::is_ready($ctx));
+        $ids = array_column(Launa_WC_Settings_Readiness::items($ctx), 'id');
         $this->assertContains('evm_wallet', $ids);
     }
 
@@ -91,14 +91,14 @@ final class SettingsReadinessTest extends TestCase
         $ctx = $this->readyContext();
         $ctx['token_ids'] = ['hedera:mainnet:0.0.456858'];
         $ctx['pay_to_address'] = '';
-        $this->assertFalse(Ax402_WC_Settings_Readiness::is_ready($ctx));
+        $this->assertFalse(Launa_WC_Settings_Readiness::is_ready($ctx));
 
         $ctx['pay_to_hedera_account_id'] = '0.0.12345';
-        $this->assertFalse(Ax402_WC_Settings_Readiness::is_ready($ctx));
+        $this->assertFalse(Launa_WC_Settings_Readiness::is_ready($ctx));
 
         $ctx['walletconnect_project_id'] = 'abc';
-        $this->assertTrue(Ax402_WC_Settings_Readiness::is_ready($ctx));
-        $ids = array_column(Ax402_WC_Settings_Readiness::items($ctx), 'id');
+        $this->assertTrue(Launa_WC_Settings_Readiness::is_ready($ctx));
+        $ids = array_column(Launa_WC_Settings_Readiness::items($ctx), 'id');
         $this->assertContains('hedera_wallet', $ids);
         $this->assertContains('walletconnect', $ids);
         $this->assertNotContains('evm_wallet', $ids);

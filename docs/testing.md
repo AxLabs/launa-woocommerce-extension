@@ -28,14 +28,14 @@ UCP protocol rules (cents, discovery shape, leak scanner, asset matching, MCP Pa
 ## Live control plane
 
 ```bash
-export AX402_API_KEY=ax402_live_...
-export AX402_PAY_TO_ADDRESS=0x...
-export AX402_PAY_TO_HEDERA_ACCOUNT_ID=0.0.x   # optional; enables mixed-family API check
+export LAUNA_API_KEY=launa_live_...
+export LAUNA_PAY_TO_ADDRESS=0x...
+export LAUNA_PAY_TO_HEDERA_ACCOUNT_ID=0.0.x   # optional; enables mixed-family API check
 npm run test:live-cp
 ```
 
-Creates and deletes a temporary API + endpoint against `https://api.ax402.io`.
-Also covers mixed EVM+Hedera `pay_to_addresses` (when `AX402_PAY_TO_HEDERA_ACCOUNT_ID` is set) and a USDC+ZCHF multi-accept 402 amount check.
+Creates and deletes a temporary API + endpoint against `https://api.launa.io`.
+Also covers mixed EVM+Hedera `pay_to_addresses` (when `LAUNA_PAY_TO_HEDERA_ACCOUNT_ID` is set) and a USDC+ZCHF multi-accept 402 amount check.
 The CRUD smoke uses Base mainnet USDC accepts when the seller account cannot yet price `eip155:845320402` assets.
 
 ## E2E payments
@@ -48,7 +48,7 @@ Quick path once `.env` is filled and `wp-env` is up:
 npm run env:e2e          # seed + readiness (+ WP_BASE_URL sync)
 # with tunnel running and WP_BASE_URL set:
 npm run test:e2e-pay     # programmatic agent pay
-npm run test:e2e-ucp     # UCP agent (on after seed; AX402_UCP_ENABLED=no to disable)
+npm run test:e2e-ucp     # UCP agent (on after seed; LAUNA_UCP_ENABLED=no to disable)
 ```
 
 ### Playwright UI
@@ -62,8 +62,8 @@ Asserts the pay page shell. MetaMask connect/sign remains a **manual** checklist
 
 ## Manual MetaMask checklist
 
-1. Configure gateway in Woo → Settings → Payments → Ax402 (or rely on seed from `.env`).
-2. Place an order with Ax402 (use public `WP_BASE_URL` for live settle).
-3. On pay page, connect MetaMask on the network matching `AX402_NETWORK`.
+1. Configure gateway in Woo → Settings → Payments → Launa (or rely on seed from `.env`).
+2. Place an order with Launa (use public `WP_BASE_URL` for live settle).
+3. On pay page, connect MetaMask on the network matching `LAUNA_NETWORK`.
 4. Confirm USDC payment.
 5. Confirm redirect to order-received and order status Processing/Completed.

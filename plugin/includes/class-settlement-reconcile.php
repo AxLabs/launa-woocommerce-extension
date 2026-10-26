@@ -4,20 +4,20 @@ declare(strict_types=1);
 defined('ABSPATH') || exit;
 
 /**
- * Complete unpaid orders from a matching Ax402 settlement.
+ * Complete unpaid orders from a matching Launa settlement.
  *
- * Ax402 may GET fulfill before writing the ledger (Hedera). Fulfill ACKs 200
+ * Launa may GET fulfill before writing the ledger (Hedera). Fulfill ACKs 200
  * without payment_complete() in that case; status polls and UCP complete
  * mark the order paid here. Also covers missing fulfill (tunnels).
  */
-final class Ax402_WC_Settlement_Reconcile
+final class Launa_WC_Settlement_Reconcile
 {
     private const TRANSIENT_TTL = 15;
 
     /**
-     * Match an Ax402 settlement to a prepared order endpoint.
+     * Match a Launa settlement to a prepared order endpoint.
      *
-     * Endpoint id is authoritative: each order prep creates a unique Ax402
+     * Endpoint id is authoritative: each order prep creates a unique Launa
      * endpoint. Do not require META_AMOUNT_ATOMIC (primary/USDC) to equal the
      * settlement amount — buyers may pay any accept (ZCHF, XGAS, …), and the
      * gateway may record a divergent atomic for 18-decimal assets.
@@ -91,7 +91,7 @@ final class Ax402_WC_Settlement_Reconcile
     }
 
     /**
-     * Look up a matching Ax402 settlement for this order's endpoint ids.
+     * Look up a matching Launa settlement for this order's endpoint ids.
      *
      * Does not mark the order paid and does not consult the settlement_reconcile
      * setting. Fulfill uses this so path-token GETs cannot payment_complete()
@@ -101,7 +101,7 @@ final class Ax402_WC_Settlement_Reconcile
      */
     public static function find_settlement_for_order(
         WC_Order $order,
-        ?Ax402_WC_Control_Plane_Client $client = null
+        ?Launa_WC_Control_Plane_Client $client = null
     ): ?array {
         try {
             return self::lookup_settlement($order, $client);
@@ -111,7 +111,7 @@ final class Ax402_WC_Settlement_Reconcile
     }
 
     /**
-     * Mark the order paid when a matching Ax402 settlement exists.
+     * Mark the order paid when a matching Launa settlement exists.
      *
      * @param bool $force When true, poll even if the settlement_reconcile setting is off
      *                    (status polls and UCP complete must always reconcile).
@@ -119,10 +119,10 @@ final class Ax402_WC_Settlement_Reconcile
      */
     public static function reconcile_order(
         WC_Order $order,
-        ?Ax402_WC_Control_Plane_Client $client = null,
+        ?Launa_WC_Control_Plane_Client $client = null,
         bool $force = false
     ): bool {
-        if (!$force && !Ax402_WC_Settings::settlement_reconcile_enabled()) {
+        if (!$force && !Launa_WC_Settings::settlement_reconcile_enabled()) {
             return false;
         }
 
@@ -130,14 +130,14 @@ final class Ax402_WC_Settlement_Reconcile
             return true;
         }
 
-        if (!Ax402_WC_Fulfill_Auth::can_fulfill_status($order->get_status())) {
+        if (!Launa_WC_Fulfill_Auth::can_fulfill_status($order->get_status())) {
             return false;
         }
 
         try {
             $match = self::lookup_settlement($order, $client);
         } catch (Throwable $e) {
-            $order->add_order_note('Ax402 settlement reconcile failed: ' . $e->getMessage());
+            $order->add_order_note('Launa settlement reconcile failed: ' . $e->getMessage());
             $order->save();
             return false;
         }
@@ -154,7 +154,7 @@ final class Ax402_WC_Settlement_Reconcile
         $order->add_order_note(
             sprintf(
                 /* translators: 1: settlement id 2: transaction hash */
-                __('Ax402 payment verified via settlement reconcile (settlement %1$s, tx %2$s). Gateway upstream fulfill was missing.', 'ax402-for-woocommerce'),
+                __('Launa payment verified via settlement reconcile (settlement %1$s, tx %2$s). Gateway upstream fulfill was missing.', 'ax402-for-woocommerce'),
                 (string) ($match['id'] ?? ''),
                 $tx !== '' ? $tx : 'n/a'
             )
@@ -163,11 +163,11 @@ final class Ax402_WC_Settlement_Reconcile
         if (self::order_is_virtual_downloadable($order) && $order->has_status('processing')) {
             $order->update_status(
                 'completed',
-                __('Virtual/downloadable order auto-completed after Ax402 payment.', 'ax402-for-woocommerce')
+                __('Virtual/downloadable order auto-completed after Launa payment.', 'ax402-for-woocommerce')
             );
         }
 
-        Ax402_WC_Order_Payment::delete_endpoint_for_order($order, $client);
+        Launa_WC_Order_Payment::delete_endpoint_for_order($order, $client);
 
         return $order->is_paid();
     }
@@ -177,23 +177,23 @@ final class Ax402_WC_Settlement_Reconcile
      */
     private static function lookup_settlement(
         WC_Order $order,
-        ?Ax402_WC_Control_Plane_Client $client = null
+        ?Launa_WC_Control_Plane_Client $client = null
     ): ?array {
-        if ($order->get_payment_method() !== Ax402_WC_Gateway_Ax402::GATEWAY_ID) {
+        if ($order->get_payment_method() !== Launa_WC_Gateway_Launa::GATEWAY_ID) {
             return null;
         }
 
-        $endpoint_ids = Ax402_WC_Order_Payment::endpoint_ids_from_order($order);
+        $endpoint_ids = Launa_WC_Order_Payment::endpoint_ids_from_order($order);
         if ($endpoint_ids === []) {
             return null;
         }
 
-        $client ??= Ax402_WC_Settings::client();
+        $client ??= Launa_WC_Settings::client();
         if ($client === null) {
             return null;
         }
 
-        $api_ids = Ax402_WC_Settings::configured_api_ids(Ax402_WC_Settings::all());
+        $api_ids = Launa_WC_Settings::configured_api_ids(Launa_WC_Settings::all());
         if ($api_ids === []) {
             return null;
         }
@@ -207,9 +207,9 @@ final class Ax402_WC_Settlement_Reconcile
             }
         }
 
-        $amount_atomic = (string) $order->get_meta(Ax402_WC_Order_Payment::META_AMOUNT_ATOMIC);
+        $amount_atomic = (string) $order->get_meta(Launa_WC_Order_Payment::META_AMOUNT_ATOMIC);
         $acceptable = [];
-        foreach (Ax402_WC_Order_Payment::settlement_options_from_order($order) as $option) {
+        foreach (Launa_WC_Order_Payment::settlement_options_from_order($order) as $option) {
             if (!is_array($option)) {
                 continue;
             }
@@ -241,12 +241,12 @@ final class Ax402_WC_Settlement_Reconcile
      */
     public static function list_for_store(bool $bypass_cache = false): array
     {
-        $client = Ax402_WC_Settings::client();
+        $client = Launa_WC_Settings::client();
         if ($client === null) {
             return [];
         }
 
-        $api_ids = Ax402_WC_Settings::configured_api_ids();
+        $api_ids = Launa_WC_Settings::configured_api_ids();
         if ($api_ids === []) {
             return [];
         }
@@ -265,11 +265,11 @@ final class Ax402_WC_Settlement_Reconcile
      * @return list<array<string, mixed>>
      */
     private static function fetch_settlements(
-        Ax402_WC_Control_Plane_Client $client,
+        Launa_WC_Control_Plane_Client $client,
         string $api_id,
         bool $bypass_cache = false
     ): array {
-        $cache_key = 'ax402_wc_settlements_' . md5($api_id);
+        $cache_key = 'launa_wc_settlements_' . md5($api_id);
         if (!$bypass_cache) {
             $cached = get_transient($cache_key);
             if (is_array($cached)) {

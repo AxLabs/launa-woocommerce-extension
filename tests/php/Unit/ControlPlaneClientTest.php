@@ -1,9 +1,9 @@
 <?php
 declare(strict_types=1);
 
-namespace Ax402\WC\Tests\Unit;
+namespace Launa\WC\Tests\Unit;
 
-use Ax402_WC_Control_Plane_Client;
+use Launa_WC_Control_Plane_Client;
 use PHPUnit\Framework\TestCase;
 
 final class ControlPlaneClientTest extends TestCase
@@ -29,7 +29,7 @@ final class ControlPlaneClientTest extends TestCase
             return ['status' => 500, 'body' => '', 'error' => 'unexpected'];
         };
 
-        $client = new Ax402_WC_Control_Plane_Client('https://api.test', 'key', $http);
+        $client = new Launa_WC_Control_Plane_Client('https://api.test', 'key', $http);
         $auth = [
             'type' => 'header',
             'header' => 'ngrok-skip-browser-warning',
@@ -38,7 +38,7 @@ final class ControlPlaneClientTest extends TestCase
         $result = $client->upsert_endpoint(
             'api1',
             'GET',
-            '/wp-json/ax402/v1/fulfill/k/t',
+            '/wp-json/launa/v1/fulfill/k/t',
             [['scheme' => 'exact', 'network' => 'eip155:845320402', 'asset' => '0x1', 'amount' => '1000000']],
             'order',
             $auth,
@@ -48,7 +48,7 @@ final class ControlPlaneClientTest extends TestCase
 
         $this->assertSame('ep1', $result['id']);
         $this->assertSame('POST', $calls[0][0]);
-        $this->assertSame('/wp-json/ax402/v1/fulfill/k/t', $calls[0][2]['path_pattern']);
+        $this->assertSame('/wp-json/launa/v1/fulfill/k/t', $calls[0][2]['path_pattern']);
         $this->assertSame($auth, $calls[0][2]['upstream_auth']);
         $this->assertSame(300, $calls[0][2]['ttl']);
     }
@@ -67,7 +67,7 @@ final class ControlPlaneClientTest extends TestCase
             return ['status' => 500, 'body' => '', 'error' => 'unexpected ' . $method . ' ' . $url];
         };
 
-        $client = new Ax402_WC_Control_Plane_Client('https://api.test', 'key', $http);
+        $client = new Launa_WC_Control_Plane_Client('https://api.test', 'key', $http);
         $auth = [
             'type' => 'header',
             'header' => 'ngrok-skip-browser-warning',
@@ -76,7 +76,7 @@ final class ControlPlaneClientTest extends TestCase
         $result = $client->upsert_endpoint(
             'api1',
             'GET',
-            '/wp-json/ax402/v1/fulfill/k/t',
+            '/wp-json/launa/v1/fulfill/k/t',
             [['scheme' => 'exact', 'network' => 'eip155:845320402', 'asset' => '0x1', 'amount' => '2000000']],
             null,
             $auth,
@@ -97,18 +97,18 @@ final class ControlPlaneClientTest extends TestCase
                 'header' => 'ngrok-skip-browser-warning',
                 'value' => '1',
             ],
-            Ax402_WC_Control_Plane_Client::upstream_auth_for_base_url(
+            Launa_WC_Control_Plane_Client::upstream_auth_for_base_url(
                 'https://example.ngrok-free.dev'
             )
         );
         $this->assertNull(
-            Ax402_WC_Control_Plane_Client::upstream_auth_for_base_url('https://shop.example.com')
+            Launa_WC_Control_Plane_Client::upstream_auth_for_base_url('https://shop.example.com')
         );
     }
 
     public function test_find_endpoint_by_path(): void
     {
-        $found = Ax402_WC_Control_Plane_Client::find_endpoint_by_path(
+        $found = Launa_WC_Control_Plane_Client::find_endpoint_by_path(
             [
                 ['id' => 'a', 'method' => 'GET', 'path_pattern' => '/a'],
                 ['id' => 'b', 'method' => 'post', 'path_pattern' => '/b'],
@@ -133,7 +133,7 @@ final class ControlPlaneClientTest extends TestCase
             return ['status' => 500, 'body' => '', 'error' => 'unexpected'];
         };
 
-        $client = new Ax402_WC_Control_Plane_Client('https://api.test', 'key', $http);
+        $client = new Launa_WC_Control_Plane_Client('https://api.test', 'key', $http);
         $client->create_api(
             'Store',
             'wc-test',
@@ -157,7 +157,7 @@ final class ControlPlaneClientTest extends TestCase
     {
         $this->assertSame(
             'HTTP 503: no available server',
-            Ax402_WC_Control_Plane_Client::http_error_message(503, "no available server\n", null)
+            Launa_WC_Control_Plane_Client::http_error_message(503, "no available server\n", null)
         );
     }
 
@@ -165,7 +165,7 @@ final class ControlPlaneClientTest extends TestCase
     {
         $this->assertSame(
             'HTTP 401: invalid api key',
-            Ax402_WC_Control_Plane_Client::http_error_message(
+            Launa_WC_Control_Plane_Client::http_error_message(
                 401,
                 '{"message":"invalid api key"}',
                 ['message' => 'invalid api key']
@@ -178,7 +178,7 @@ final class ControlPlaneClientTest extends TestCase
         $http = static function (): array {
             return ['status' => 503, 'body' => 'no available server'];
         };
-        $client = new Ax402_WC_Control_Plane_Client('https://api.ax402.io', 'key', $http);
+        $client = new Launa_WC_Control_Plane_Client('https://api.launa.io', 'key', $http);
         $this->expectException(\RuntimeException::class);
         $this->expectExceptionMessage('Platform config failed: HTTP 503: no available server');
         $client->get_platform_config();

@@ -96,5 +96,5 @@ jobs:
             echo "Skipping live-cp: AX402_API_KEY secret is not set."
             exit 0
           fi
-          export AX402_BASE_URL="${AX402_BASE_URL:-https://api.ax402.io}"
+          export AX402_BASE_URL="${AX402_BASE_URL:-https://api.launa.io}"
           bash bin/run-phpunit.sh --testsuite Live

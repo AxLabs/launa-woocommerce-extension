@@ -1,7 +1,7 @@
 ( function () {
 	'use strict';
 
-	const i18n = window.ax402AdminSettings || {};
+	const i18n = window.launaAdminSettings || {};
 
 	function onReady( fn ) {
 		if ( document.readyState === 'loading' ) {
@@ -24,8 +24,8 @@
 
 	function initAdvancedToggle() {
 		const heading =
-			document.getElementById( 'woocommerce_ax402_advanced_title' ) ||
-			document.querySelector( '.ax402-advanced-heading' );
+			document.getElementById( 'woocommerce_launa_advanced_title' ) ||
+			document.querySelector( '.launa-advanced-heading' );
 		if ( ! heading ) {
 			return;
 		}
@@ -35,12 +35,12 @@
 			return;
 		}
 
-		heading.classList.add( 'ax402-advanced-heading' );
-		table.id = table.id || 'ax402-advanced-fields';
+		heading.classList.add( 'launa-advanced-heading' );
+		table.id = table.id || 'launa-advanced-fields';
 
 		const button = document.createElement( 'button' );
 		button.type = 'button';
-		button.className = 'button-link ax402-advanced-toggle';
+		button.className = 'button-link launa-advanced-toggle';
 		button.setAttribute( 'aria-controls', table.id );
 
 		heading.appendChild( document.createTextNode( ' ' ) );
@@ -127,12 +127,12 @@
 			if ( ! ( target instanceof Element ) ) {
 				return;
 			}
-			const button = target.closest( '[data-ax402-copy]' );
+			const button = target.closest( '[data-launa-copy]' );
 			if ( ! button ) {
 				return;
 			}
 			event.preventDefault();
-			const text = button.getAttribute( 'data-ax402-copy' ) || '';
+			const text = button.getAttribute( 'data-launa-copy' ) || '';
 			if ( text === '' ) {
 				return;
 			}
@@ -144,13 +144,13 @@
 		let hederaOn = false;
 		document
 			.querySelectorAll(
-				'input.ax402-settlement-token[data-hedera="1"]:checked:not(:disabled)'
+				'input.launa-settlement-token[data-hedera="1"]:checked:not(:disabled)'
 			)
 			.forEach( function () {
 				hederaOn = true;
 			} );
 		document
-			.querySelectorAll( '[data-ax402-hedera-payto="1"]' )
+			.querySelectorAll( '[data-launa-hedera-payto="1"]' )
 			.forEach( function ( el ) {
 				if ( ! ( el instanceof HTMLInputElement ) ) {
 					return;
@@ -174,7 +174,7 @@
 			if ( ! ( target instanceof Element ) ) {
 				return;
 			}
-			if ( target.classList.contains( 'ax402-settlement-token' ) ) {
+			if ( target.classList.contains( 'launa-settlement-token' ) ) {
 				syncHederaFields();
 			}
 		} );
@@ -187,11 +187,11 @@
 			if ( ! ( target instanceof Element ) ) {
 				return;
 			}
-			const button = target.closest( '[data-ax402-refresh-tokens]' );
+			const button = target.closest( '[data-launa-refresh-tokens]' );
 			if ( ! button ) {
 				return;
 			}
-			const flag = document.querySelector( '[data-ax402-refresh-flag]' );
+			const flag = document.querySelector( '[data-launa-refresh-flag]' );
 			if ( flag instanceof HTMLInputElement ) {
 				flag.value = '1';
 			}

@@ -6,9 +6,9 @@ defined('ABSPATH') || exit;
 /**
  * Plugin settings stored in wp_options.
  */
-final class Ax402_WC_Settings
+final class Launa_WC_Settings
 {
-    public const OPTION_KEY = 'ax402_wc_settings';
+    public const OPTION_KEY = 'launa_wc_settings';
 
     /**
      * @return array{
@@ -34,7 +34,7 @@ final class Ax402_WC_Settings
     public static function all(): array
     {
         $defaults = [
-            'base_url' => 'https://api.ax402.io',
+            'base_url' => 'https://api.launa.io',
             'api_key' => '',
             'pay_to_address' => '',
             'pay_to_hedera_account_id' => '',
@@ -61,7 +61,7 @@ final class Ax402_WC_Settings
         $merged = array_merge($defaults, $stored);
         if (!empty($merged['api_key_enc']) && empty($merged['api_key'])) {
             try {
-                $merged['api_key'] = Ax402_WC_Crypto::decrypt((string) $merged['api_key_enc']);
+                $merged['api_key'] = Launa_WC_Crypto::decrypt((string) $merged['api_key_enc']);
             } catch (Throwable $e) {
                 $merged['api_key'] = '';
             }
@@ -89,7 +89,7 @@ final class Ax402_WC_Settings
         return [
             'base_url' => $env_base !== ''
                 ? $env_base
-                : ($stored_base !== '' ? $stored_base : 'https://api.ax402.io'),
+                : ($stored_base !== '' ? $stored_base : 'https://api.launa.io'),
             'api_key' => (string) $merged['api_key'],
             'pay_to_address' => (string) $merged['pay_to_address'],
             'pay_to_hedera_account_id' => (string) $merged['pay_to_hedera_account_id'],
@@ -112,16 +112,12 @@ final class Ax402_WC_Settings
     }
 
     /**
-     * AX402_BASE_URL when set in the PHP process. Empty means use the stored option.
+     * LAUNA_BASE_URL, or AX402_BASE_URL when the new name is unset.
+     * Empty means use the stored option.
      */
     public static function environment_base_url(): string
     {
-        $raw = getenv('AX402_BASE_URL');
-        if (!is_string($raw) || trim($raw) === '') {
-            $from_env = $_ENV['AX402_BASE_URL'] ?? '';
-            $raw = is_string($from_env) ? $from_env : '';
-        }
-        $raw = trim($raw);
+        $raw = self::environment_string('LAUNA_BASE_URL', 'AX402_BASE_URL');
         if ($raw === '') {
             return '';
         }
@@ -130,7 +126,27 @@ final class Ax402_WC_Settings
     }
 
     /**
-     * Stored API base URL without applying AX402_BASE_URL.
+     * First non-empty process env var. $legacy keeps existing CI secrets working.
+     */
+    public static function environment_string(string $primary, string $legacy): string
+    {
+        foreach ([$primary, $legacy] as $name) {
+            $raw = getenv($name);
+            if (!is_string($raw) || trim($raw) === '') {
+                $from_env = $_ENV[$name] ?? '';
+                $raw = is_string($from_env) ? $from_env : '';
+            }
+            $raw = trim($raw);
+            if ($raw !== '') {
+                return $raw;
+            }
+        }
+
+        return '';
+    }
+
+    /**
+     * Stored API base URL without applying LAUNA_BASE_URL.
      */
     public static function persisted_base_url(): string
     {
@@ -140,10 +156,10 @@ final class Ax402_WC_Settings
         }
         $url = trim((string) ($stored['base_url'] ?? ''));
         if ($url === '') {
-            return 'https://api.ax402.io';
+            return 'https://api.launa.io';
         }
 
-        return self::sanitize_base_url($url) ?: 'https://api.ax402.io';
+        return self::sanitize_base_url($url) ?: 'https://api.launa.io';
     }
 
     public static function ucp_enabled(): bool
@@ -176,7 +192,7 @@ final class Ax402_WC_Settings
     public static function pay_to_for_network(string $network): string
     {
         $settings = self::all();
-        if (Ax402_WC_Platform_Tokens::is_hedera_network($network)) {
+        if (Launa_WC_Platform_Tokens::is_hedera_network($network)) {
             return trim($settings['pay_to_hedera_account_id']);
         }
 
@@ -238,12 +254,12 @@ final class Ax402_WC_Settings
             return $ids;
         }
 
-        $platform ??= Ax402_WC_Platform_Config_Store::platform_or_sync();
+        $platform ??= Launa_WC_Platform_Config_Store::platform_or_sync();
         if ($platform === []) {
             return [];
         }
 
-        return Ax402_WC_Platform_Tokens::default_enabled_token_ids(
+        return Launa_WC_Platform_Tokens::default_enabled_token_ids(
             $platform,
             $settings['network_mode']
         );
@@ -263,7 +279,7 @@ final class Ax402_WC_Settings
 
         $pay_to = $current['pay_to_address'];
         if (array_key_exists('pay_to_address', $input)) {
-            $evm = Ax402_WC_Evm_Address::parse((string) $input['pay_to_address']);
+            $evm = Launa_WC_Evm_Address::parse((string) $input['pay_to_address']);
             $pay_to = $evm['ok'] ? $evm['checksummed'] : $current['pay_to_address'];
         }
 
@@ -324,11 +340,11 @@ final class Ax402_WC_Settings
         }
 
         $to_store = $next;
-        $to_store['api_key_enc'] = $api_key !== '' ? Ax402_WC_Crypto::encrypt($api_key) : '';
+        $to_store['api_key_enc'] = $api_key !== '' ? Launa_WC_Crypto::encrypt($api_key) : '';
         unset($to_store['api_key']);
 
         update_option(self::OPTION_KEY, $to_store, false);
-        Ax402_WC_Ucp_Profile_Builder::bust();
+        Launa_WC_Ucp_Profile_Builder::bust();
     }
 
     public static function sanitize_hedera_account_id(string $value): string
@@ -398,13 +414,13 @@ final class Ax402_WC_Settings
         return self::all()['settlement_reconcile'] === 'yes';
     }
 
-    public static function client(): ?Ax402_WC_Control_Plane_Client
+    public static function client(): ?Launa_WC_Control_Plane_Client
     {
         $settings = self::all();
         if ($settings['api_key'] === '' || $settings['base_url'] === '') {
             return null;
         }
 
-        return new Ax402_WC_Control_Plane_Client($settings['base_url'], $settings['api_key']);
+        return new Launa_WC_Control_Plane_Client($settings['base_url'], $settings['api_key']);
     }
 }

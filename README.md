@@ -1,20 +1,22 @@
-# Ax402 WooCommerce Extension
+# Launa WooCommerce Extension
 
-WooCommerce **payment provider** plugin that accepts **x402 / Ax402** on-chain settlements for humans (wallet / MetaMask) and agents (buyer SDK / CLI).
+WooCommerce **payment provider** plugin that accepts **x402 / Launa** on-chain settlements for humans (wallet / MetaMask) and agents (buyer SDK / CLI).
 
-The store catalog stays in **USD**. Settlement uses the same payment tokens Ax402 exposes on the platform (`USDC`, `USDT`, and other enabled assets) — merchants choose which to accept; shoppers (or agents) pick one at pay time. See [docs/context.md](docs/context.md).
+The store catalog stays in **USD**. Settlement uses the same payment tokens Launa exposes on the platform (`USDC`, `USDT`, and other enabled assets) — merchants choose which to accept; shoppers (or agents) pick one at pay time. See [docs/context.md](docs/context.md).
 
 This is a gateway extension — not a full storefront. Catalog, cart, customers, and the order list stay in WooCommerce.
 
+This plugin was previously **Ax402 for WooCommerce**. Ax402 was rebranded to Launa, so the plugin is now **Launa for WooCommerce**. The WordPress.org listing stays [ax402-for-woocommerce](https://wordpress.org/plugins/ax402-for-woocommerce/). Development continues in [AxLabs/launa-woocommerce-extension](https://github.com/AxLabs/launa-woocommerce-extension).
+
 ## Features (v0)
 
-- Checkout payment method `ax402`
-- Multi-asset settlement from Ax402 platform `payment_tokens` (admin multi-select)
+- Checkout payment method `launa`
+- Multi-asset settlement from Launa platform `payment_tokens` (admin multi-select)
 - Per-order gateway endpoint with multi-token `accepts[]`, priced from the USD cart total
-- Human pay page: settlement picker, network switch + balance checks, `@ax402/react-paywall`
+- Human pay page: settlement picker, network switch + balance checks, `@launaio/react-paywall`
 - Agent REST: products, create order, order status (same multi-accept payment URL)
 - UCP for buying agents (`/.well-known/ucp`, `/wp-json/ucp/v1`) — on by default; see [docs/ucp.md](docs/ucp.md) and [ucp-x402-binding](https://github.com/AxLabs/ucp-x402-binding)
-- Fulfill upstream: valid `order_key` + token ACKs HTTP 200; `payment_complete()` only with a matching Ax402 settlement
+- Fulfill upstream: valid `order_key` + token ACKs HTTP 200; `payment_complete()` only with a matching Launa settlement
 - `wp-env` local development + demo product seed
 - Unit + live control-plane tests
 
@@ -38,7 +40,7 @@ Full walkthrough: [docs/local-development.md](docs/local-development.md).
 ```bash
 nvm use
 cp .env.example .env
-# fill AX402_API_KEY, AX402_PAY_TO_ADDRESS, AX402_NETWORK
+# fill LAUNA_API_KEY, LAUNA_PAY_TO_ADDRESS, LAUNA_NETWORK
 
 npm install
 npm --prefix plugin install
@@ -54,7 +56,7 @@ npm run env:e2e     # re-seed + E2E readiness (set WP_BASE_URL after ngrok)
 | Admin | http://localhost:8888/wp-admin |
 | Login | `admin` / `password` |
 
-Configure **WooCommerce → Settings → Payments → Ax402** (API key, pay-to wallet, settlement tokens). Orders appear under **WooCommerce → Orders**.
+Configure **WooCommerce → Settings → Payments → Launa** (API key, pay-to wallet, settlement tokens). Orders appear under **WooCommerce → Orders**.
 
 Full E2E (tunnel + pay): [docs/e2e.md](docs/e2e.md).
 
@@ -62,21 +64,21 @@ Full E2E (tunnel + pay): [docs/e2e.md](docs/e2e.md).
 
 | Product | Price |
 |---|---|
-| Ax402 E2E Micropay | $0.01 |
-| Ax402 Spark Note | $0.02 |
-| Ax402 Signal Pulse | $0.001 |
-| Ax402 Dust Credit | $0.0003 |
-| Ax402 Access Pass | $0.10 |
-| Ax402 Starter Pack | $0.25 |
+| Launa E2E Micropay | $0.01 |
+| Launa Spark Note | $0.02 |
+| Launa Signal Pulse | $0.001 |
+| Launa Dust Credit | $0.0003 |
+| Launa Access Pass | $0.10 |
+| Launa Starter Pack | $0.25 |
 
 ## Tests
 
 ```bash
 npm test                 # PHP unit + integration + JS unit
 npm run plugin-check     # WordPress Plugin Check (needs wp-env)
-npm run test:live-cp     # needs AX402_API_KEY (+ PAY_TO for create/delete)
+npm run test:live-cp     # needs LAUNA_API_KEY (+ PAY_TO for create/delete)
 npm run test:e2e-pay     # needs public WP_BASE_URL + buyer key (see docs/e2e.md)
-npm run test:e2e-ucp     # UCP agent flow (on by default after seed; AX402_UCP_ENABLED=no to disable)
+npm run test:e2e-ucp     # UCP agent flow (on by default after seed; LAUNA_UCP_ENABLED=no to disable)
 ```
 
 See [docs/testing.md](docs/testing.md) and [docs/e2e.md](docs/e2e.md).

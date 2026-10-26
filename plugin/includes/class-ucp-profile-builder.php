@@ -13,12 +13,12 @@ defined('ABSPATH') || exit;
  * both use maps of arrays; omit `map_order`. Handler `schema` is the x402.org
  * URL (namespace authority); capability `spec` URLs point at shopping docs.
  */
-final class Ax402_WC_Ucp_Profile_Builder
+final class Launa_WC_Ucp_Profile_Builder
 {
     public const UCP_VERSION = '2026-08-25';
     public const HANDLER_VERSION = '2026-08-25';
     public const QUOTE_WINDOW = 600;
-    public const TRANSIENT_KEY = 'ax402_wc_ucp_profile_v3';
+    public const TRANSIENT_KEY = 'launa_wc_ucp_profile_v3';
     public const TRANSIENT_TTL = 300;
     public const SPEC_BASE = 'https://ucp.dev/2026-08-25';
 
@@ -55,9 +55,9 @@ final class Ax402_WC_Ucp_Profile_Builder
         string $endpoint = '',
         string $mcp_endpoint = ''
     ): array {
-        $settings ??= function_exists('get_option') ? Ax402_WC_Settings::all() : [];
+        $settings ??= function_exists('get_option') ? Launa_WC_Settings::all() : [];
         $platform ??= function_exists('get_option')
-            ? Ax402_WC_Platform_Config_Store::platform_or_sync()
+            ? Launa_WC_Platform_Config_Store::platform_or_sync()
             : [];
         if ($endpoint === '' && function_exists('rest_url')) {
             $endpoint = rest_url('ucp/v1');
@@ -73,7 +73,7 @@ final class Ax402_WC_Ucp_Profile_Builder
 
         $token_ids = [];
         if (function_exists('get_option')) {
-            $token_ids = Ax402_WC_Settings::enabled_token_ids($platform);
+            $token_ids = Launa_WC_Settings::enabled_token_ids($platform);
         } elseif (isset($settings['enabled_token_ids']) && is_array($settings['enabled_token_ids'])) {
             $token_ids = array_values(array_map('strval', $settings['enabled_token_ids']));
         }
@@ -127,7 +127,7 @@ final class Ax402_WC_Ucp_Profile_Builder
             ],
         ];
 
-        Ax402_WC_Ucp_Leak::assert_clean($profile, is_array($settings) ? $settings : []);
+        Launa_WC_Ucp_Leak::assert_clean($profile, is_array($settings) ? $settings : []);
 
         return $profile;
     }
@@ -157,7 +157,7 @@ final class Ax402_WC_Ucp_Profile_Builder
     {
         if (function_exists('delete_transient')) {
             delete_transient(self::TRANSIENT_KEY);
-            delete_transient('ax402_wc_ucp_profile_v2');
+            delete_transient('launa_wc_ucp_profile_v2');
         }
     }
 
@@ -229,7 +229,7 @@ final class Ax402_WC_Ucp_Profile_Builder
         $seen_assets = [];
 
         foreach ($token_ids as $token_id) {
-            $token = Ax402_WC_Platform_Tokens::find_token_by_id($platform, $token_id);
+            $token = Launa_WC_Platform_Tokens::find_token_by_id($platform, $token_id);
             if ($token === null) {
                 continue;
             }

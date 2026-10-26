@@ -2,24 +2,26 @@
  * Programmatic agent pay E2E.
  *
  * Requires:
- * - AX402_API_KEY, AX402_PAY_TO_ADDRESS
- * - AX402_EVM_PRIVATE_KEY (funded Base Sepolia USDC)
- * - WP_BASE_URL publicly reachable by Ax402 gateway (tunnel or staging)
+ * - LAUNA_API_KEY, LAUNA_PAY_TO_ADDRESS (AX402_* still works)
+ * - LAUNA_EVM_PRIVATE_KEY (funded Base Sepolia USDC; AX402_EVM_PRIVATE_KEY still works)
+ * - WP_BASE_URL publicly reachable by Launa gateway (tunnel or staging)
  *
- * Flow: POST /wp-json/ax402/v1/orders → buyer pay gateway URL → GET order status paid
+ * Flow: POST /wp-json/launa/v1/orders → buyer pay gateway URL → GET order status paid
  */
-import { buyerClientFromEnv } from '@ax402/sdk/buyer';
+import { buyerClientFromEnv } from '@launaio/sdk/buyer';
 
 const wpBase = (process.env.WP_BASE_URL || '').replace(/\/$/, '');
 const productId = process.env.E2E_PRODUCT_ID || '';
 
-function requireEnv(name) {
-  const v = process.env[name];
-  if (!v) {
-    console.error(`Missing ${name}`);
-    process.exit(2);
+function requireEnv(...names) {
+  for (const name of names) {
+    const value = process.env[name];
+    if (value) {
+      return value;
+    }
   }
-  return v;
+  console.error(`Missing ${names.join(' or ')}`);
+  process.exit(2);
 }
 
 async function main() {
@@ -27,11 +29,17 @@ async function main() {
     console.error('WP_BASE_URL is required (must be public for gateway upstream)');
     process.exit(2);
   }
-  requireEnv('AX402_EVM_PRIVATE_KEY');
+  const buyerKey = requireEnv('LAUNA_EVM_PRIVATE_KEY', 'AX402_EVM_PRIVATE_KEY');
+  if (!process.env.LAUNA_EVM_PRIVATE_KEY) {
+    process.env.LAUNA_EVM_PRIVATE_KEY = buyerKey;
+  }
+  if (!process.env.AX402_EVM_PRIVATE_KEY) {
+    process.env.AX402_EVM_PRIVATE_KEY = buyerKey;
+  }
 
   let pid = productId;
   if (!pid) {
-    const catalog = await fetch(`${wpBase}/wp-json/ax402/v1/products`).then((r) => r.json());
+    const catalog = await fetch(`${wpBase}/wp-json/launa/v1/products`).then((r) => r.json());
     pid = String(catalog?.products?.[0]?.id || '');
   }
   if (!pid) {
@@ -39,7 +47,7 @@ async function main() {
     process.exit(1);
   }
 
-  const created = await fetch(`${wpBase}/wp-json/ax402/v1/orders`, {
+  const created = await fetch(`${wpBase}/wp-json/launa/v1/orders`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({

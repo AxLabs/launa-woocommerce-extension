@@ -1,10 +1,10 @@
 <?php
 declare(strict_types=1);
 
-namespace Ax402\WC\Tests\Unit;
+namespace Launa\WC\Tests\Unit;
 
-use Ax402_WC_Control_Plane_Client;
-use Ax402_WC_Gateway_Cors;
+use Launa_WC_Control_Plane_Client;
+use Launa_WC_Gateway_Cors;
 use PHPUnit\Framework\TestCase;
 
 final class GatewayCorsTest extends TestCase
@@ -13,31 +13,31 @@ final class GatewayCorsTest extends TestCase
     {
         $this->assertSame(
             'https://shop.example.com',
-            Ax402_WC_Gateway_Cors::normalize_origin('https://shop.example.com/checkout?x=1')
+            Launa_WC_Gateway_Cors::normalize_origin('https://shop.example.com/checkout?x=1')
         );
         $this->assertSame(
             'http://localhost:8888',
-            Ax402_WC_Gateway_Cors::normalize_origin('http://localhost:8888/wp-admin/')
+            Launa_WC_Gateway_Cors::normalize_origin('http://localhost:8888/wp-admin/')
         );
         $this->assertSame(
             'http://127.0.0.1:3000',
-            Ax402_WC_Gateway_Cors::normalize_origin('http://127.0.0.1:3000')
+            Launa_WC_Gateway_Cors::normalize_origin('http://127.0.0.1:3000')
         );
     }
 
     public function test_normalize_origin_rejects_invalid(): void
     {
-        $this->assertNull(Ax402_WC_Gateway_Cors::normalize_origin('ftp://shop.example.com'));
-        $this->assertNull(Ax402_WC_Gateway_Cors::normalize_origin('https://user:pass@shop.example.com'));
-        $this->assertNull(Ax402_WC_Gateway_Cors::normalize_origin('not-a-url'));
-        $this->assertNull(Ax402_WC_Gateway_Cors::normalize_origin('http://hostname-without-tld'));
+        $this->assertNull(Launa_WC_Gateway_Cors::normalize_origin('ftp://shop.example.com'));
+        $this->assertNull(Launa_WC_Gateway_Cors::normalize_origin('https://user:pass@shop.example.com'));
+        $this->assertNull(Launa_WC_Gateway_Cors::normalize_origin('not-a-url'));
+        $this->assertNull(Launa_WC_Gateway_Cors::normalize_origin('http://hostname-without-tld'));
     }
 
     public function test_client_cors_methods(): void
     {
         $calls = [];
-        $client = new Ax402_WC_Control_Plane_Client(
-            'https://api.staging.ax402.io',
+        $client = new Launa_WC_Control_Plane_Client(
+            'https://api.staging.launa.io',
             'key',
             static function (string $method, string $url, ?array $body) use (&$calls): array {
                 $calls[] = [$method, $url, $body];

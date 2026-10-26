@@ -4,11 +4,11 @@ declare(strict_types=1);
 defined('ABSPATH') || exit;
 
 /**
- * Cached Ax402 platform config (payment tokens + supported networks) for admin + checkout.
+ * Cached Launa platform config (payment tokens + supported networks) for admin + checkout.
  */
-final class Ax402_WC_Platform_Config_Store
+final class Launa_WC_Platform_Config_Store
 {
-    public const OPTION_KEY = 'ax402_wc_platform_cache';
+    public const OPTION_KEY = 'launa_wc_platform_cache';
 
     /**
      * @return array{
@@ -38,7 +38,7 @@ final class Ax402_WC_Platform_Config_Store
             'supported_networks' => $supported,
             'synced_at' => (int) ($stored['synced_at'] ?? 0),
             'error' => (string) ($stored['error'] ?? ''),
-            'token_count' => count(Ax402_WC_Platform_Tokens::enabled_tokens($platform)),
+            'token_count' => count(Launa_WC_Platform_Tokens::enabled_tokens($platform)),
             'source_base_url' => (string) ($stored['source_base_url'] ?? ''),
         ];
     }
@@ -66,7 +66,7 @@ final class Ax402_WC_Platform_Config_Store
         $current = self::get();
         $base = $source_base_url;
         if ($base === null) {
-            $settings = class_exists('Ax402_WC_Settings') ? Ax402_WC_Settings::all() : [];
+            $settings = class_exists('Launa_WC_Settings') ? Launa_WC_Settings::all() : [];
             $base = (string) ($settings['base_url'] ?? $current['source_base_url']);
         }
         update_option(
@@ -87,9 +87,9 @@ final class Ax402_WC_Platform_Config_Store
      *
      * @return array{ok:bool,error:string,token_count:int,synced_at:int}
      */
-    public static function sync(?Ax402_WC_Control_Plane_Client $client = null): array
+    public static function sync(?Launa_WC_Control_Plane_Client $client = null): array
     {
-        $client ??= Ax402_WC_Settings::client();
+        $client ??= Launa_WC_Settings::client();
         if ($client === null) {
             $current = self::get();
             $payload = [
@@ -123,7 +123,7 @@ final class Ax402_WC_Platform_Config_Store
             return [
                 'ok' => true,
                 'error' => '',
-                'token_count' => count(Ax402_WC_Platform_Tokens::enabled_tokens($platform)),
+                'token_count' => count(Launa_WC_Platform_Tokens::enabled_tokens($platform)),
                 'synced_at' => time(),
             ];
         } catch (Throwable $e) {

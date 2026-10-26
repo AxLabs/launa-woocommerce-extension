@@ -1,11 +1,11 @@
 <?php
 declare(strict_types=1);
 
-namespace Ax402\WC\Tests\Integration;
+namespace Launa\WC\Tests\Integration;
 
-use Ax402_WC_Money;
-use Ax402_WC_Order_Payment;
-use Ax402_WC_Platform_Tokens;
+use Launa_WC_Money;
+use Launa_WC_Order_Payment;
+use Launa_WC_Platform_Tokens;
 use PHPUnit\Framework\TestCase;
 
 /**
@@ -23,16 +23,16 @@ final class OrderPaymentMetaTest extends TestCase
             JSON_THROW_ON_ERROR
         );
 
-        $amount = Ax402_WC_Money::normalize_order_total('22.50');
-        $atomic = Ax402_WC_Money::usdc_to_atomic($amount);
-        $token = Ax402_WC_Platform_Tokens::find_usdc_token(
+        $amount = Launa_WC_Money::normalize_order_total('22.50');
+        $atomic = Launa_WC_Money::usdc_to_atomic($amount);
+        $token = Launa_WC_Platform_Tokens::find_usdc_token(
             $platform,
-            Ax402_WC_Platform_Tokens::NETWORK_SEPOLIA
+            Launa_WC_Platform_Tokens::NETWORK_SEPOLIA
         );
-        $accept = Ax402_WC_Platform_Tokens::build_accept($token, $atomic, 'exact');
-        $path = Ax402_WC_Order_Payment::fulfill_path('wc_order_demo', 'aabbccdd');
+        $accept = Launa_WC_Platform_Tokens::build_accept($token, $atomic, 'exact');
+        $path = Launa_WC_Order_Payment::fulfill_path('wc_order_demo', 'aabbccdd');
 
-        $options = Ax402_WC_Platform_Tokens::build_settlement_options(
+        $options = Launa_WC_Platform_Tokens::build_settlement_options(
             $platform,
             [
                 (string) $token['id'],
@@ -49,6 +49,6 @@ final class OrderPaymentMetaTest extends TestCase
         $this->assertCount(2, $accepts);
         $this->assertSame('22500000', $accepts[0]['amount']);
         $this->assertSame('22500000', $accepts[1]['amount']);
-        $this->assertSame('/wp-json/ax402/v1/fulfill/wc_order_demo/aabbccdd', $path);
+        $this->assertSame('/wp-json/launa/v1/fulfill/wc_order_demo/aabbccdd', $path);
     }
 }

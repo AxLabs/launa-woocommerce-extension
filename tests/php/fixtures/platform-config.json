@@ -1,10 +1,10 @@
 {
-  "platform_domain": "x.ax402.io",
-  "admin_host": "api.ax402.io",
+  "platform_domain": "x.launa.io",
+  "admin_host": "api.launa.io",
   "gateway_port": 8090,
   "development_platform_domains": [
     {
-      "domain": "dev.x.ax402.io",
+      "domain": "dev.x.launa.io",
       "label": "Development",
       "is_primary": true,
       "enabled": true

@@ -1,16 +1,16 @@
 <?php
 declare(strict_types=1);
 
-namespace Ax402\WC\Tests\Unit;
+namespace Launa\WC\Tests\Unit;
 
-use Ax402_WC_Settlement_Reconcile;
+use Launa_WC_Settlement_Reconcile;
 use PHPUnit\Framework\TestCase;
 
 final class SettlementReconcileTest extends TestCase
 {
     public function test_normalize_list_payload(): void
     {
-        $rows = Ax402_WC_Settlement_Reconcile::normalize_settlements_payload([
+        $rows = Launa_WC_Settlement_Reconcile::normalize_settlements_payload([
             ['endpoint_id' => 'a', 'amount' => '1'],
             'skip',
         ]);
@@ -20,7 +20,7 @@ final class SettlementReconcileTest extends TestCase
 
     public function test_normalize_items_payload(): void
     {
-        $rows = Ax402_WC_Settlement_Reconcile::normalize_settlements_payload([
+        $rows = Launa_WC_Settlement_Reconcile::normalize_settlements_payload([
             'items' => [
                 ['endpoint_id' => 'b', 'amount' => '2'],
             ],
@@ -37,12 +37,12 @@ final class SettlementReconcileTest extends TestCase
             ['endpoint_id' => 'ep-2', 'amount' => '200', 'tx' => '0x2'],
         ];
 
-        $match = Ax402_WC_Settlement_Reconcile::find_matching_settlement($settlements, 'ep-2', '200');
+        $match = Launa_WC_Settlement_Reconcile::find_matching_settlement($settlements, 'ep-2', '200');
         $this->assertNotNull($match);
         $this->assertSame('0x2', $match['tx']);
 
         $this->assertNull(
-            Ax402_WC_Settlement_Reconcile::find_matching_settlement($settlements, '', '200')
+            Launa_WC_Settlement_Reconcile::find_matching_settlement($settlements, '', '200')
         );
     }
 
@@ -58,7 +58,7 @@ final class SettlementReconcileTest extends TestCase
             ],
         ];
 
-        $match = Ax402_WC_Settlement_Reconcile::find_matching_settlement(
+        $match = Launa_WC_Settlement_Reconcile::find_matching_settlement(
             $settlements,
             'ep-zchf',
             '130000' // primary USDC atomic — must not block
@@ -74,7 +74,7 @@ final class SettlementReconcileTest extends TestCase
             ['endpoint_id' => 'ep-1', 'amount' => '80759000000000000', 'tx' => '0xnew'],
         ];
 
-        $match = Ax402_WC_Settlement_Reconcile::find_matching_settlement(
+        $match = Launa_WC_Settlement_Reconcile::find_matching_settlement(
             $settlements,
             'ep-1',
             '100300',

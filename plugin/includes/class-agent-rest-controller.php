@@ -6,39 +6,41 @@ defined('ABSPATH') || exit;
 /**
  * Agent-facing browse + buy REST API.
  */
-final class Ax402_WC_Agent_Rest_Controller
+final class Launa_WC_Agent_Rest_Controller
 {
     public function register(): void
     {
-        register_rest_route('ax402/v1', '/products', [
-            'methods' => WP_REST_Server::READABLE,
-            'callback' => [$this, 'list_products'],
-            'permission_callback' => '__return_true',
-        ]);
+        foreach (Launa_WC_Rest::namespaces() as $namespace) {
+            register_rest_route($namespace, '/products', [
+                'methods' => WP_REST_Server::READABLE,
+                'callback' => [$this, 'list_products'],
+                'permission_callback' => '__return_true',
+            ]);
 
-        register_rest_route('ax402/v1', '/orders', [
-            'methods' => WP_REST_Server::CREATABLE,
-            'callback' => [$this, 'create_order'],
-            'permission_callback' => '__return_true',
-        ]);
+            register_rest_route($namespace, '/orders', [
+                'methods' => WP_REST_Server::CREATABLE,
+                'callback' => [$this, 'create_order'],
+                'permission_callback' => '__return_true',
+            ]);
 
-        register_rest_route('ax402/v1', '/orders/(?P<order_key>[A-Za-z0-9_-]+)', [
-            'methods' => WP_REST_Server::READABLE,
-            'callback' => [$this, 'get_order'],
-            'permission_callback' => '__return_true',
-        ]);
+            register_rest_route($namespace, '/orders/(?P<order_key>[A-Za-z0-9_-]+)', [
+                'methods' => WP_REST_Server::READABLE,
+                'callback' => [$this, 'get_order'],
+                'permission_callback' => '__return_true',
+            ]);
 
-        register_rest_route('ax402/v1', '/orders/(?P<order_key>[A-Za-z0-9_-]+)/settlement', [
-            'methods' => WP_REST_Server::CREATABLE,
-            'callback' => [$this, 'select_settlement'],
-            'permission_callback' => '__return_true',
-            'args' => [
-                'order_key' => [
-                    'required' => true,
-                    'type' => 'string',
+            register_rest_route($namespace, '/orders/(?P<order_key>[A-Za-z0-9_-]+)/settlement', [
+                'methods' => WP_REST_Server::CREATABLE,
+                'callback' => [$this, 'select_settlement'],
+                'permission_callback' => '__return_true',
+                'args' => [
+                    'order_key' => [
+                        'required' => true,
+                        'type' => 'string',
+                    ],
                 ],
-            ],
-        ]);
+            ]);
+        }
     }
 
     public function list_products(WP_REST_Request $request): WP_REST_Response
@@ -84,7 +86,7 @@ final class Ax402_WC_Agent_Rest_Controller
     public function create_order(WP_REST_Request $request): WP_REST_Response|WP_Error
     {
         if (get_woocommerce_currency() !== 'USD') {
-            return new WP_Error('ax402_currency', 'Store currency must be USD', ['status' => 400]);
+            return new WP_Error('launa_currency', 'Store currency must be USD', ['status' => 400]);
         }
 
         $params = $request->get_json_params();
@@ -94,7 +96,7 @@ final class Ax402_WC_Agent_Rest_Controller
 
         $line_items = $params['line_items'] ?? null;
         if (!is_array($line_items) || $line_items === []) {
-            return new WP_Error('ax402_invalid', 'line_items is required', ['status' => 400]);
+            return new WP_Error('launa_invalid', 'line_items is required', ['status' => 400]);
         }
 
         $order = wc_create_order();
@@ -111,7 +113,7 @@ final class Ax402_WC_Agent_Rest_Controller
             $product = wc_get_product($product_id);
             if (!$product) {
                 $order->delete(true);
-                return new WP_Error('ax402_invalid', 'Unknown product_id ' . $product_id, ['status' => 400]);
+                return new WP_Error('launa_invalid', 'Unknown product_id ' . $product_id, ['status' => 400]);
             }
             $order->add_product($product, $qty);
         }
@@ -121,16 +123,16 @@ final class Ax402_WC_Agent_Rest_Controller
             $order->set_billing_email($email);
         }
 
-        $order->set_payment_method(Ax402_WC_Gateway_Ax402::GATEWAY_ID);
-        $order->set_payment_method_title('Ax402');
+        $order->set_payment_method(Launa_WC_Gateway_Launa::GATEWAY_ID);
+        $order->set_payment_method_title('Launa');
         $order->calculate_totals();
-        $order->update_status('pending', __('Agent order awaiting Ax402 payment.', 'ax402-for-woocommerce'));
+        $order->update_status('pending', __('Agent order awaiting Launa payment.', 'ax402-for-woocommerce'));
 
         try {
-            $payment = Ax402_WC_Order_Payment::prepare($order);
+            $payment = Launa_WC_Order_Payment::prepare($order);
         } catch (Throwable $e) {
             $order->delete(true);
-            return new WP_Error('ax402_prepare_failed', $e->getMessage(), ['status' => 500]);
+            return new WP_Error('launa_prepare_failed', $e->getMessage(), ['status' => 500]);
         }
 
         return new WP_REST_Response([
@@ -140,8 +142,8 @@ final class Ax402_WC_Agent_Rest_Controller
             'amount_usdc' => $payment['amount_usdc'],
             'network' => $payment['network'],
             'payment_url' => $payment['gateway_url'],
-            'pay_page_url' => Ax402_WC_Order_Payment::pay_page_url($order),
-            'status_url' => rest_url('ax402/v1/orders/' . $order->get_order_key()),
+            'pay_page_url' => Launa_WC_Order_Payment::pay_page_url($order),
+            'status_url' => rest_url('launa/v1/orders/' . $order->get_order_key()),
         ], 201);
     }
 
@@ -150,20 +152,20 @@ final class Ax402_WC_Agent_Rest_Controller
         $order_key = (string) $request['order_key'];
         $order_id = wc_get_order_id_by_order_key($order_key);
         if (!$order_id) {
-            return new WP_Error('ax402_not_found', 'Order not found', ['status' => 404]);
+            return new WP_Error('launa_not_found', 'Order not found', ['status' => 404]);
         }
 
         $order = wc_get_order($order_id);
         if (!$order instanceof WC_Order) {
-            return new WP_Error('ax402_not_found', 'Order not found', ['status' => 404]);
+            return new WP_Error('launa_not_found', 'Order not found', ['status' => 404]);
         }
 
         // Gateway may settle after fulfill ACK, or skip fulfill (tunnel). Always
         // complete from a matching settlement — do not wait for a second fulfill.
-        Ax402_WC_Settlement_Reconcile::reconcile_order($order, null, true);
+        Launa_WC_Settlement_Reconcile::reconcile_order($order, null, true);
         $order = wc_get_order($order_id);
         if (!$order instanceof WC_Order) {
-            return new WP_Error('ax402_not_found', 'Order not found', ['status' => 404]);
+            return new WP_Error('launa_not_found', 'Order not found', ['status' => 404]);
         }
 
         $downloads = [];
@@ -184,9 +186,9 @@ final class Ax402_WC_Agent_Rest_Controller
             'paid' => $order->is_paid(),
             'total' => $order->get_total(),
             'currency' => $order->get_currency(),
-            'amount_usdc' => (string) $order->get_meta(Ax402_WC_Order_Payment::META_AMOUNT_USDC),
-            'network' => (string) $order->get_meta(Ax402_WC_Order_Payment::META_NETWORK),
-            'payment_url' => (string) $order->get_meta(Ax402_WC_Order_Payment::META_GATEWAY_URL),
+            'amount_usdc' => (string) $order->get_meta(Launa_WC_Order_Payment::META_AMOUNT_USDC),
+            'network' => (string) $order->get_meta(Launa_WC_Order_Payment::META_NETWORK),
+            'payment_url' => (string) $order->get_meta(Launa_WC_Order_Payment::META_GATEWAY_URL),
             'thank_you_url' => $order->is_paid() ? $order->get_checkout_order_received_url() : null,
             'downloads' => $downloads,
         ], 200);
@@ -197,16 +199,16 @@ final class Ax402_WC_Agent_Rest_Controller
         $order_key = (string) $request['order_key'];
         $order_id = wc_get_order_id_by_order_key($order_key);
         if (!$order_id) {
-            return new WP_Error('ax402_not_found', 'Order not found', ['status' => 404]);
+            return new WP_Error('launa_not_found', 'Order not found', ['status' => 404]);
         }
 
         $order = wc_get_order($order_id);
         if (!$order instanceof WC_Order) {
-            return new WP_Error('ax402_not_found', 'Order not found', ['status' => 404]);
+            return new WP_Error('launa_not_found', 'Order not found', ['status' => 404]);
         }
 
-        if ($order->get_payment_method() !== Ax402_WC_Gateway_Ax402::GATEWAY_ID) {
-            return new WP_Error('ax402_invalid', 'Order is not an Ax402 payment', ['status' => 409]);
+        if ($order->get_payment_method() !== Launa_WC_Gateway_Launa::GATEWAY_ID) {
+            return new WP_Error('launa_invalid', 'Order is not a Launa payment', ['status' => 409]);
         }
 
         $body = $request->get_json_params();
@@ -216,11 +218,11 @@ final class Ax402_WC_Agent_Rest_Controller
         $token_id = (string) ($body['tokenId'] ?? $body['token_id'] ?? $request->get_param('tokenId') ?? '');
 
         try {
-            $locked = Ax402_WC_Order_Payment::lock_settlement_token($order, $token_id);
+            $locked = Launa_WC_Order_Payment::lock_settlement_token($order, $token_id);
         } catch (InvalidArgumentException $e) {
-            return new WP_Error('ax402_invalid', $e->getMessage(), ['status' => 400]);
+            return new WP_Error('launa_invalid', $e->getMessage(), ['status' => 400]);
         } catch (Throwable $e) {
-            return new WP_Error('ax402_lock_failed', $e->getMessage(), ['status' => 500]);
+            return new WP_Error('launa_lock_failed', $e->getMessage(), ['status' => 500]);
         }
 
         return new WP_REST_Response([

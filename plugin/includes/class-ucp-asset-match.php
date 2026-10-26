@@ -6,7 +6,7 @@ defined('ABSPATH') || exit;
 /**
  * Match a UCP payment instrument to a prepared settlement option.
  */
-final class Ax402_WC_Ucp_Asset_Match
+final class Launa_WC_Ucp_Asset_Match
 {
     /**
      * @param list<array<string, mixed>> $options order meta settlement options

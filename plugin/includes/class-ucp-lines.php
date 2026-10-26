@@ -6,7 +6,7 @@ defined('ABSPATH') || exit;
 /**
  * Shared line-item and buyer writes for UCP cart and checkout.
  */
-final class Ax402_WC_Ucp_Lines
+final class Launa_WC_Ucp_Lines
 {
     /**
      * @param list<mixed> $line_items
@@ -45,7 +45,7 @@ final class Ax402_WC_Ucp_Lines
             if ($id === '') {
                 throw new InvalidArgumentException('line_items[].item.id is required.');
             }
-            $product = Ax402_WC_Ucp_Catalog::resolve_purchasable($id);
+            $product = Launa_WC_Ucp_Catalog::resolve_purchasable($id);
             if (!$product instanceof WC_Product) {
                 throw new InvalidArgumentException(esc_html('Unknown or unpurchasable item id: ' . $id));
             }

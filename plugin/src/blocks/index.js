@@ -10,10 +10,10 @@ if (
 ) {
 	// Checkout Blocks runtime not present — avoid hard failure on other pages.
 	// eslint-disable-next-line no-console
-	console.warn( '[ax402] WooCommerce Blocks payment registry unavailable' );
+	console.warn( '[launa] WooCommerce Blocks payment registry unavailable' );
 } else {
-	const settings = getSetting( 'ax402_data', {} );
-	const label = decodeEntities( settings.title || 'Pay with Ax402' );
+	const settings = getSetting( 'launa_data', {} );
+	const label = decodeEntities( settings.title || 'Pay with Launa' );
 
 	const Content = () => (
 		<RawHTML>{ decodeEntities( settings.description || '' ) }</RawHTML>
@@ -31,7 +31,7 @@ if (
 	);
 
 	registerPaymentMethod( {
-		name: 'ax402',
+		name: 'launa',
 		label: <Label />,
 		content: <Content />,
 		edit: <Content />,

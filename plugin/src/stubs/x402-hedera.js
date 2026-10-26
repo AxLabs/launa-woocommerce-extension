@@ -1,5 +1,5 @@
 /**
- * EVM-only stubs for Hedera modules pulled in by @ax402/react-paywall@0.0.6.
+ * EVM-only stubs for Hedera modules pulled in by @launaio/react-paywall.
  * WooCommerce pay page does not support Hedera; excluding those deps keeps the
  * pay-page bundle small enough for WordPress.org.
  */

@@ -8,7 +8,7 @@ defined('ABSPATH') || exit;
  *
  * @phpstan-type StatusResult array{status:string, messages:list<array<string,string>>}
  */
-final class Ax402_WC_Ucp_Status
+final class Launa_WC_Ucp_Status
 {
     public const INCOMPLETE = 'incomplete';
     public const REQUIRES_ESCALATION = 'requires_escalation';
@@ -40,7 +40,7 @@ final class Ax402_WC_Ucp_Status
         $messages = [];
 
         if (!$in_stock) {
-            $messages[] = Ax402_WC_Ucp_Response::message(
+            $messages[] = Launa_WC_Ucp_Response::message(
                 'error',
                 'out_of_stock',
                 'One or more items are not available.',
@@ -49,7 +49,7 @@ final class Ax402_WC_Ucp_Status
         }
 
         if (!$total_positive) {
-            $messages[] = Ax402_WC_Ucp_Response::message(
+            $messages[] = Launa_WC_Ucp_Response::message(
                 'error',
                 'invalid',
                 'Checkout total must be greater than zero.',
@@ -58,7 +58,7 @@ final class Ax402_WC_Ucp_Status
         }
 
         if ($needs_shipping && !$has_destination) {
-            $messages[] = Ax402_WC_Ucp_Response::message(
+            $messages[] = Launa_WC_Ucp_Response::message(
                 'error',
                 'missing',
                 'A fulfillment destination is required.',
@@ -69,7 +69,7 @@ final class Ax402_WC_Ucp_Status
 
         if ($needs_shipping && $has_destination && !$has_shipping_selection) {
             if ($has_rates) {
-                $messages[] = Ax402_WC_Ucp_Response::message(
+                $messages[] = Launa_WC_Ucp_Response::message(
                     'error',
                     'missing',
                     'Select a shipping option.',
@@ -77,7 +77,7 @@ final class Ax402_WC_Ucp_Status
                     '$.fulfillment.methods[0].groups[0].selected_option_id'
                 );
             } else {
-                $messages[] = Ax402_WC_Ucp_Response::message(
+                $messages[] = Launa_WC_Ucp_Response::message(
                     'error',
                     'invalid',
                     'No shipping rates are available for this destination.',

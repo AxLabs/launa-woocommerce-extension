@@ -4,14 +4,14 @@ declare(strict_types=1);
 defined('ABSPATH') || exit;
 
 /**
- * Detects Ax402 facilitator/gateway identifiers that must not appear in UCP JSON.
+ * Detects Launa facilitator/gateway identifiers that must not appear in UCP JSON.
  *
  * The External-URL path still puts the gateway URL inside the x402
  * PAYMENT-REQUIRED header (signed `resource`). That header is not UCP JSON.
  * MCP copies the same PaymentRequired object into the tool result so clients
  * that cannot read HTTP headers can still sign; do not leak-scan that block.
  */
-final class Ax402_WC_Ucp_Leak
+final class Launa_WC_Ucp_Leak
 {
     /**
      * @param array<string, mixed> $settings
@@ -27,7 +27,11 @@ final class Ax402_WC_Ucp_Leak
             'endpoint_id',
             'fulfill_token',
             'api_key',
+            'launa_live_',
+            'launa_sandbox_',
             'ax402_live_',
+            'ax402_sandbox_',
+            '/wp-json/launa/v1/fulfill/',
             '/wp-json/ax402/v1/fulfill/',
         ];
 
@@ -89,7 +93,9 @@ final class Ax402_WC_Ucp_Leak
                 continue;
             }
             $looks_url = str_starts_with($value, 'http://') || str_starts_with($value, 'https://');
-            $looks_ax402 = str_contains($value, '.ax402.io')
+            $looks_ax402 = str_contains($value, '.launa.io')
+                || str_contains($value, '.ax402.io')
+                || str_contains($value, '/wp-json/launa/')
                 || str_contains($value, '/wp-json/ax402/');
             if ($looks_ax402 || ($looks_url && in_array((string) $key, ['resource', 'resourceUrl', 'url'], true))) {
                 $data[$key] = '[redacted]';

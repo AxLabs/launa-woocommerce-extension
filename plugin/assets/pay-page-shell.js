@@ -10,11 +10,11 @@
 	}
 
 	function initInfoTooltip() {
-		const root = document.querySelector( '[data-ax402-info]' );
+		const root = document.querySelector( '[data-launa-info]' );
 		if ( ! root ) {
 			return;
 		}
-		const btn = root.querySelector( '.ax402-info-btn' );
+		const btn = root.querySelector( '.launa-info-btn' );
 		if ( ! btn ) {
 			return;
 		}

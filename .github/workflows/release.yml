@@ -52,7 +52,7 @@ jobs:
 
           NOTES="$(mktemp)"
           {
-            echo "## Ax402 for WooCommerce ${TAG}"
+            echo "## Launa for WooCommerce ${TAG}"
             echo
             echo "WordPress plugin package: \`$(basename "$ZIP")\`"
             echo

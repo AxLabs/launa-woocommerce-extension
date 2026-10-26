@@ -7,13 +7,13 @@ defined('ABSPATH') || exit;
 /**
  * Resolve EVM chain display name / public RPC / explorer from dynamic metadata.
  *
- * Prefers fields on Ax402 payment token `extra`, then one ethereum-lists chain
- * file via the GitHub Contents API. No Ax402-specific chain ids are hard-coded here.
+ * Prefers fields on Launa payment token `extra`, then one ethereum-lists chain
+ * file via the GitHub Contents API. No Launa-specific chain ids are hard-coded here.
  */
-final class Ax402_WC_Chain_Metadata
+final class Launa_WC_Chain_Metadata
 {
     private const CHAIN_FILE_URL = 'https://api.github.com/repos/ethereum-lists/chains/contents/_data/chains/eip155-%d.json';
-    private const CACHE_KEY_PREFIX = 'ax402_wc_chain_eip155_';
+    private const CACHE_KEY_PREFIX = 'launa_wc_chain_eip155_';
     private const CACHE_TTL = 86400;
 
     /** @var array<int, array<string, mixed>|null> */
@@ -90,7 +90,7 @@ final class Ax402_WC_Chain_Metadata
     public static function from_caip2(string $network): array
     {
         $network = trim($network);
-        if (Ax402_WC_Platform_Tokens::is_hedera_network($network)) {
+        if (Launa_WC_Platform_Tokens::is_hedera_network($network)) {
             $is_testnet = str_contains(strtolower($network), 'testnet');
             return [
                 'label' => $is_testnet ? 'Hedera Testnet' : 'Hedera Mainnet',

@@ -7,14 +7,14 @@ UCP for agents: [ucp.md](ucp.md). x402 on UCP: [ucp-x402-binding](https://github
 
 ## Components
 
-1. **WooCommerce payment gateway (`ax402`)** — creates a pending order and prepares an Ax402 endpoint priced to the order total.
-2. **Ax402 control plane** — `POST /apis`, endpoint CRUD at `https://api.ax402.io` (or staging).
-3. **Ax402 gateway** — buyer-facing paid URL that issues HTTP 402, verifies payment, proxies to Woo fulfill.
-4. **Woo fulfill REST** — `GET /wp-json/ax402/v1/fulfill/{order_key}/{fulfill_token}` ACKs the x402 resource (HTTP 200). It calls `payment_complete()` only when Ax402 already has a matching settlement.
-5. **Human pay page** — storefront page mounting `@ax402/react-paywall` against the gateway URL.
-6. **Agent REST** — catalog + create order + status (+ settlement lock) under `/wp-json/ax402/v1/*`.
-7. **UCP for agents (opt-in)** — `/.well-known/ucp` + `/wp-json/ucp/v1` catalog, cart, checkout, order (REST) and `/wp-json/ucp/v1/mcp` (MCP JSON-RPC). Protocol **2026-08-25**. REST 402 at complete; MCP `complete_checkout` carries PaymentRequired on `structuredContent`. Agents pay `resource.url` (Ax402 gateway) then complete again; the plugin does **not** proxy signatures. Human pay page unchanged. See [ucp.md](ucp.md) and [ucp-x402-binding](https://github.com/AxLabs/ucp-x402-binding).
-8. **Settlement reconcile** — status polls mark the order paid from a matching control-plane settlement. Required when Ax402 GETs fulfill **before** writing the ledger (Hedera); also covers missing fulfill (tunnels).
+1. **WooCommerce payment gateway (`launa`)** — creates a pending order and prepares a Launa endpoint priced to the order total.
+2. **Launa control plane** — `POST /apis`, endpoint CRUD at `https://api.launa.io` (or staging).
+3. **Launa gateway** — buyer-facing paid URL that issues HTTP 402, verifies payment, proxies to Woo fulfill.
+4. **Woo fulfill REST** — `GET /wp-json/launa/v1/fulfill/{order_key}/{fulfill_token}` ACKs the x402 resource (HTTP 200). It calls `payment_complete()` only when Launa already has a matching settlement.
+5. **Human pay page** — storefront page mounting `@launaio/react-paywall` against the gateway URL.
+6. **Agent REST** — catalog + create order + status (+ settlement lock) under `/wp-json/launa/v1/*`.
+7. **UCP for agents (opt-in)** — `/.well-known/ucp` + `/wp-json/ucp/v1` catalog, cart, checkout, order (REST) and `/wp-json/ucp/v1/mcp` (MCP JSON-RPC). Protocol **2026-08-25**. REST 402 at complete; MCP `complete_checkout` carries PaymentRequired on `structuredContent`. Agents pay `resource.url` (Launa gateway) then complete again; the plugin does **not** proxy signatures. Human pay page unchanged. See [ucp.md](ucp.md) and [ucp-x402-binding](https://github.com/AxLabs/ucp-x402-binding).
+8. **Settlement reconcile** — status polls mark the order paid from a matching control-plane settlement. Required when Launa GETs fulfill **before** writing the ledger (Hedera); also covers missing fulfill (tunnels).
 
 ## Payment flow (human)
 
@@ -24,7 +24,7 @@ Checkout (USD)
     ▼
 prepare order endpoint
   · one endpoint, multi-token accepts[] (FX from control plane / 1:1 stables)
-  · path = /wp-json/ax402/v1/fulfill/{order_key}/{fulfill_token}
+  · path = /wp-json/launa/v1/fulfill/{order_key}/{fulfill_token}
   · upstream_base_url = store public origin (home_url)
   · if upstream host is ngrok*: endpoint upstream_auth
       { type: header, header: ngrok-skip-browser-warning, value: 1 }
@@ -32,7 +32,7 @@ prepare order endpoint
     ▼
 Pay page (store origin)
   · shopper picks settlement token (USDC / ZCHF / …)
-  · POST /wp-json/ax402/v1/orders/{key}/settlement
+  · POST /wp-json/launa/v1/orders/{key}/settlement
       → remember preference (shared gateway_url; paywall policy selects the accept)
   · PaywallGate fetches gateway URL directly (CORS)
     │
@@ -49,7 +49,7 @@ Pay page (store origin)
         gateway submits on-chain + writes settlement
             │
             ▼
-        pay page polls GET /wp-json/ax402/v1/orders/{key}
+        pay page polls GET /wp-json/launa/v1/orders/{key}
           reconcile → payment_complete() when the row exists
 ```
 
@@ -57,11 +57,11 @@ Agents follow the same gateway GET fulfill → settle → reconcile path; they c
 
 ## One API, one endpoint
 
-Payment prep creates **one temporary Ax402 endpoint** with every priced token in `accepts[]`. Example: USDC on Base, USDC on Hedera, and XGAS on Neo X → one endpoint, three accepts, one fulfill path.
+Payment prep creates **one temporary Launa endpoint** with every priced token in `accepts[]`. Example: USDC on Base, USDC on Hedera, and XGAS on Neo X → one endpoint, three accepts, one fulfill path.
 
 Before `PaywallGate` runs, the pay page records the shopper’s token via:
 
-`POST /wp-json/ax402/v1/orders/{order_key}/settlement` `{ "tokenId": "…" }`
+`POST /wp-json/launa/v1/orders/{order_key}/settlement` `{ "tokenId": "…" }`
 
 That updates order meta and paywall policy (`preferredNetworks` / `preferredAssets`). It does not rewrite the control-plane endpoint. The gateway 402 already lists every accept with the correct atomic amount.
 
@@ -80,7 +80,7 @@ The x402 resource URL uses the fulfill path. The gateway GETs:
 
 `{api.upstream_base_url}` + `{endpoint.path_pattern}`
 
-That hop may run **before** Ax402 submits the chain transfer and writes the settlement (observed on Hedera). Woo must return HTTP 200 so settle proceeds. A 409 “not settled” aborts that path (fee-only transfer, no USDC).
+That hop may run **before** Launa submits the chain transfer and writes the settlement (observed on Hedera). Woo must return HTTP 200 so settle proceeds. A 409 “not settled” aborts that path (fee-only transfer, no USDC).
 
 `ensure_api()` keeps the store API `upstream_base_url` aligned with `home_url()` (the public tunnel in E2E).
 
@@ -96,7 +96,7 @@ That hop may run **before** Ax402 submits the chain transfer and writes the sett
 }
 ```
 
-The gateway injects that header on the upstream hop. Without it, settle can succeed while Woo never sees fulfill (pay page stays on “Confirming payment…”). When fulfill finds a matching settlement it adds: **Ax402 payment verified via fulfill upstream.**
+The gateway injects that header on the upstream hop. Without it, settle can succeed while Woo never sees fulfill (pay page stays on “Confirming payment…”). When fulfill finds a matching settlement it adds: **Launa payment verified via fulfill upstream.**
 
 ## Settlement reconcile
 
@@ -110,15 +110,15 @@ Reconciled orders note: **Gateway upstream fulfill was missing.**
 
 - Catalog total is USD; non-stable tokens use control-plane `GET /exchange-rates?quote=usd&date=YYYY-MM-DD` (weekdays: today → yesterday if a weekday → closest previous business day; weekends skip Sat/Sun and use Friday). Results are cached 5 minutes; checkout and the pay page reuse that cache.
 - When truncating to the gateway’s max fraction digits, amounts **ceil** (round up) so the charged atomic is never below the converted value.
-- Primary meta `_ax402_amount_atomic` follows the selected / primary token (not always 6-decimal USDC).
+- Primary meta `_launa_amount_atomic` follows the selected / primary token (not always 6-decimal USDC).
 
 ## Trust model (v0)
 
-Fulfill ACKs HTTP 200 when `order_key` + one-time `fulfill_token` are valid. It calls `payment_complete()` only when Ax402 has a matching settlement for the order’s `endpoint_id`. The path token alone is not enough: the gateway URL uses the same path, so a reverse-proxied unpaid GET can present the token without a ledger row — that request must not mark the order paid (and must not 409, or Ax402 will not settle).
+Fulfill ACKs HTTP 200 when `order_key` + one-time `fulfill_token` are valid. It calls `payment_complete()` only when Launa has a matching settlement for the order’s `endpoint_id`. The path token alone is not enough: the gateway URL uses the same path, so a reverse-proxied unpaid GET can present the token without a ledger row — that request must not mark the order paid (and must not 409, or Launa will not settle).
 
 ## Browser CORS
 
-The human pay page runs on the store origin and calls the Ax402 gateway **directly**. On API create / settings save / pay-page load, the plugin pushes the store origin(s) to `PUT/POST /apis/{id}/cors` so the gateway allows browser `fetch()`.
+The human pay page runs on the store origin and calls the Launa gateway **directly**. On API create / settings save / pay-page load, the plugin pushes the store origin(s) to `PUT/POST /apis/{id}/cors` so the gateway allows browser `fetch()`.
 
 The same-origin `pay-proxy` route remains available as a fallback for older gateways that have not redeployed per-API CORS yet, but the pay page prefers the direct gateway URL.
 

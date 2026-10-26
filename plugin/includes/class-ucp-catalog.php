@@ -6,7 +6,7 @@ defined('ABSPATH') || exit;
 /**
  * Maps WooCommerce products to UCP catalog Product / Variant shapes.
  */
-final class Ax402_WC_Ucp_Catalog
+final class Launa_WC_Ucp_Catalog
 {
     public const CAP_SEARCH = 'dev.ucp.shopping.catalog.search';
     public const CAP_LOOKUP = 'dev.ucp.shopping.catalog.lookup';
@@ -62,7 +62,7 @@ final class Ax402_WC_Ucp_Catalog
 
         $has_next = $page * $limit < (int) $q->found_posts;
         $body_out = [
-            'ucp' => Ax402_WC_Ucp_Response::ucp(self::CAP_SEARCH),
+            'ucp' => Launa_WC_Ucp_Response::ucp(self::CAP_SEARCH),
             'products' => $products,
             'pagination' => [
                 'cursor' => $has_next ? self::cursor_for_page($page + 1) : '',
@@ -81,16 +81,16 @@ final class Ax402_WC_Ucp_Catalog
     {
         $ids = $body['ids'] ?? [];
         if (!is_array($ids) || $ids === []) {
-            return Ax402_WC_Ucp_Response::rest_error(
+            return Launa_WC_Ucp_Response::rest_error(
                 400,
-                [Ax402_WC_Ucp_Response::message('error', 'invalid', 'ids is required', 'unrecoverable')],
+                [Launa_WC_Ucp_Response::message('error', 'invalid', 'ids is required', 'unrecoverable')],
                 self::CAP_LOOKUP
             );
         }
         if (count($ids) > 50) {
-            return Ax402_WC_Ucp_Response::rest_error(
+            return Launa_WC_Ucp_Response::rest_error(
                 400,
-                [Ax402_WC_Ucp_Response::message('error', 'request_too_large', 'Lookup batch exceeds 50 ids.', 'unrecoverable')],
+                [Launa_WC_Ucp_Response::message('error', 'request_too_large', 'Lookup batch exceeds 50 ids.', 'unrecoverable')],
                 self::CAP_LOOKUP
             );
         }
@@ -104,14 +104,14 @@ final class Ax402_WC_Ucp_Catalog
             }
             $mapped = $this->map_by_any_id($id, $id);
             if ($mapped === null) {
-                $messages[] = Ax402_WC_Ucp_Response::message('info', 'not_found', $id, 'recoverable');
+                $messages[] = Launa_WC_Ucp_Response::message('info', 'not_found', $id, 'recoverable');
                 continue;
             }
             $products[] = $mapped;
         }
 
         $out = [
-            'ucp' => Ax402_WC_Ucp_Response::ucp(self::CAP_LOOKUP),
+            'ucp' => Launa_WC_Ucp_Response::ucp(self::CAP_LOOKUP),
             'products' => $products,
         ];
         if ($messages !== []) {
@@ -128,18 +128,18 @@ final class Ax402_WC_Ucp_Catalog
     {
         $id = trim((string) ($body['id'] ?? ''));
         if ($id === '') {
-            return Ax402_WC_Ucp_Response::rest_error(
+            return Launa_WC_Ucp_Response::rest_error(
                 400,
-                [Ax402_WC_Ucp_Response::message('error', 'invalid', 'id is required', 'unrecoverable')],
+                [Launa_WC_Ucp_Response::message('error', 'invalid', 'id is required', 'unrecoverable')],
                 self::CAP_LOOKUP
             );
         }
 
         $mapped = $this->map_by_any_id($id, $id, true);
         if ($mapped === null) {
-            return Ax402_WC_Ucp_Response::rest_error(
+            return Launa_WC_Ucp_Response::rest_error(
                 200,
-                [Ax402_WC_Ucp_Response::message(
+                [Launa_WC_Ucp_Response::message(
                     'error',
                     'not_found',
                     'Product not found: ' . $id,
@@ -150,7 +150,7 @@ final class Ax402_WC_Ucp_Catalog
         }
 
         return new WP_REST_Response([
-            'ucp' => Ax402_WC_Ucp_Response::ucp(self::CAP_LOOKUP),
+            'ucp' => Launa_WC_Ucp_Response::ucp(self::CAP_LOOKUP),
             'product' => $mapped,
         ], 200);
     }
@@ -171,7 +171,7 @@ final class Ax402_WC_Ucp_Catalog
             return null;
         }
         $price = (string) $product->get_price();
-        if (Ax402_WC_Ucp_Money::usd_to_cents_exact($price) === null) {
+        if (Launa_WC_Ucp_Money::usd_to_cents_exact($price) === null) {
             return null;
         }
 
@@ -286,8 +286,8 @@ final class Ax402_WC_Ucp_Catalog
             'url' => get_permalink($product->get_id()) ?: '',
             'categories' => $this->categories($product),
             'price_range' => [
-                'min' => ['amount' => $min, 'currency' => Ax402_WC_Ucp_Money::CURRENCY],
-                'max' => ['amount' => $max, 'currency' => Ax402_WC_Ucp_Money::CURRENCY],
+                'min' => ['amount' => $min, 'currency' => Launa_WC_Ucp_Money::CURRENCY],
+                'max' => ['amount' => $max, 'currency' => Launa_WC_Ucp_Money::CURRENCY],
             ],
             'variants' => $variants,
         ];
@@ -322,7 +322,7 @@ final class Ax402_WC_Ucp_Catalog
         if (!$product->is_purchasable()) {
             return null;
         }
-        $cents = Ax402_WC_Ucp_Money::usd_to_cents_exact((string) $product->get_price());
+        $cents = Launa_WC_Ucp_Money::usd_to_cents_exact((string) $product->get_price());
         if ($cents === null) {
             return null;
         }
@@ -337,18 +337,18 @@ final class Ax402_WC_Ucp_Catalog
             ),
             'price' => [
                 'amount' => $cents,
-                'currency' => Ax402_WC_Ucp_Money::CURRENCY,
+                'currency' => Launa_WC_Ucp_Money::CURRENCY,
             ],
             'availability' => [
                 'available' => $product->is_in_stock(),
                 'status' => $product->is_in_stock() ? 'in_stock' : 'out_of_stock',
             ],
             'metadata' => [
-                'woocommerce' => Ax402_WC_Ucp_Fulfillment::catalog_metadata($product),
+                'woocommerce' => Launa_WC_Ucp_Fulfillment::catalog_metadata($product),
             ],
         ];
         $tags = [];
-        if (Ax402_WC_Ucp_Fulfillment::product_is_digital($product)) {
+        if (Launa_WC_Ucp_Fulfillment::product_is_digital($product)) {
             $tags[] = 'digital';
             if ($product->is_downloadable()) {
                 $tags[] = 'downloadable';

@@ -9,7 +9,7 @@ defined('ABSPATH') || exit;
  * Adapted from kornrunner/keccak (MIT License).
  * https://github.com/kornrunner/php-keccak
  */
-final class Ax402_WC_Keccak
+final class Launa_WC_Keccak
 {
     /** @var list<int> */
     private const RC_LO = [

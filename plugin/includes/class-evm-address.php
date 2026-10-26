@@ -6,7 +6,7 @@ defined('ABSPATH') || exit;
 /**
  * EVM pay-to address parsing and EIP-55 checksums.
  */
-final class Ax402_WC_Evm_Address
+final class Launa_WC_Evm_Address
 {
     public const ERROR_EMPTY = '';
     public const ERROR_FORMAT = 'format';
@@ -50,7 +50,7 @@ final class Ax402_WC_Evm_Address
     public static function checksum(string $address): string
     {
         $hex = strtolower(str_starts_with($address, '0x') ? substr($address, 2) : $address);
-        $hash = Ax402_WC_Keccak::hash256_hex($hex);
+        $hash = Launa_WC_Keccak::hash256_hex($hex);
         $out = '0x';
         $len = strlen($hex);
         for ($i = 0; $i < $len; $i++) {

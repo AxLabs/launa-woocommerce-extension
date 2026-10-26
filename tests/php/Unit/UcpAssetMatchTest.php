@@ -1,9 +1,9 @@
 <?php
 declare(strict_types=1);
 
-namespace Ax402\WC\Tests\Unit;
+namespace Launa\WC\Tests\Unit;
 
-use Ax402_WC_Ucp_Asset_Match;
+use Launa_WC_Ucp_Asset_Match;
 use PHPUnit\Framework\TestCase;
 
 final class UcpAssetMatchTest extends TestCase
@@ -29,13 +29,13 @@ final class UcpAssetMatchTest extends TestCase
 
     public function test_defaults_to_primary(): void
     {
-        $matched = Ax402_WC_Ucp_Asset_Match::match($this->options(), []);
+        $matched = Launa_WC_Ucp_Asset_Match::match($this->options(), []);
         $this->assertSame('USDC', $matched['symbol'] ?? null);
     }
 
     public function test_matches_network_and_asset(): void
     {
-        $matched = Ax402_WC_Ucp_Asset_Match::match($this->options(), [
+        $matched = Launa_WC_Ucp_Asset_Match::match($this->options(), [
             'network' => 'eip155:8453',
             'asset' => '0x1111111111111111111111111111111111111111',
         ]);
@@ -44,7 +44,7 @@ final class UcpAssetMatchTest extends TestCase
 
     public function test_unknown_pair_is_null(): void
     {
-        $this->assertNull(Ax402_WC_Ucp_Asset_Match::match($this->options(), [
+        $this->assertNull(Launa_WC_Ucp_Asset_Match::match($this->options(), [
             'network' => 'eip155:1',
             'asset' => '0xdead',
         ]));
@@ -52,7 +52,7 @@ final class UcpAssetMatchTest extends TestCase
 
     public function test_id_match_is_case_insensitive(): void
     {
-        $matched = Ax402_WC_Ucp_Asset_Match::match($this->options(), [
+        $matched = Launa_WC_Ucp_Asset_Match::match($this->options(), [
             'id' => 'EIP155:8453:XGAS',
         ]);
         $this->assertSame('xGAS', $matched['symbol'] ?? null);
@@ -60,7 +60,7 @@ final class UcpAssetMatchTest extends TestCase
 
     public function test_id_selects_token(): void
     {
-        $matched = Ax402_WC_Ucp_Asset_Match::match($this->options(), [
+        $matched = Launa_WC_Ucp_Asset_Match::match($this->options(), [
             'id' => 'eip155:8453:xgas',
             'handler_id' => 'org.x402.payment',
             'type' => 'x402',
@@ -71,7 +71,7 @@ final class UcpAssetMatchTest extends TestCase
 
     public function test_preferred_instrument_ignores_unselected_list(): void
     {
-        $preferred = Ax402_WC_Ucp_Asset_Match::preferred_instrument([
+        $preferred = Launa_WC_Ucp_Asset_Match::preferred_instrument([
             [
                 'id' => 'eip155:8453:usdc',
                 'network' => 'eip155:8453',
@@ -87,13 +87,13 @@ final class UcpAssetMatchTest extends TestCase
         ]);
         $this->assertSame('eip155:8453:xgas', $preferred['id'] ?? null);
 
-        $none = Ax402_WC_Ucp_Asset_Match::preferred_instrument([
+        $none = Launa_WC_Ucp_Asset_Match::preferred_instrument([
             ['id' => 'a', 'network' => 'eip155:8453', 'asset' => '0x1'],
             ['id' => 'b', 'network' => 'eip155:47763', 'asset' => '0x2'],
         ]);
         $this->assertSame([], $none);
 
-        $single = Ax402_WC_Ucp_Asset_Match::preferred_instrument([
+        $single = Launa_WC_Ucp_Asset_Match::preferred_instrument([
             ['id' => 'eip155:47763:xgas', 'network' => 'eip155:47763', 'asset' => '0x9'],
         ]);
         $this->assertSame('eip155:47763:xgas', $single['id'] ?? null);
@@ -101,7 +101,7 @@ final class UcpAssetMatchTest extends TestCase
 
     public function test_id_and_pair_conflict_is_null(): void
     {
-        $this->assertNull(Ax402_WC_Ucp_Asset_Match::match($this->options(), [
+        $this->assertNull(Launa_WC_Ucp_Asset_Match::match($this->options(), [
             'id' => 'eip155:8453:xgas',
             'network' => 'eip155:8453',
             'asset' => '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913',
@@ -110,7 +110,7 @@ final class UcpAssetMatchTest extends TestCase
 
     public function test_available_pairs(): void
     {
-        $pairs = Ax402_WC_Ucp_Asset_Match::available_pairs($this->options());
+        $pairs = Launa_WC_Ucp_Asset_Match::available_pairs($this->options());
         $this->assertCount(2, $pairs);
         $this->assertSame('eip155:8453', $pairs[0]['network']);
     }
@@ -123,17 +123,17 @@ final class UcpAssetMatchTest extends TestCase
                 'network' => 'eip155:8453',
                 'asset' => '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913',
                 'symbol' => 'USDC',
-                'gatewayUrl' => 'https://shop.example.x.ax402.io/secret',
+                'gatewayUrl' => 'https://shop.example.x.launa.io/secret',
             ],
             [
                 'tokenId' => 'tok_xgas',
                 'network' => 'eip155:47763',
                 'asset' => '0x9a50C8804dC885F118835cD96d3Ea4D4A5131A01',
                 'symbol' => 'XGAS',
-                'gatewayUrl' => 'https://shop.example.x.ax402.io/other',
+                'gatewayUrl' => 'https://shop.example.x.launa.io/other',
             ],
         ];
-        $instruments = Ax402_WC_Ucp_Asset_Match::checkout_instruments($options, $options[1]);
+        $instruments = Launa_WC_Ucp_Asset_Match::checkout_instruments($options, $options[1]);
         $this->assertCount(2, $instruments);
         $this->assertTrue($instruments[1]['selected']);
         $this->assertFalse($instruments[0]['selected']);

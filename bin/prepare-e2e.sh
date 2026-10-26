@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Prepare / verify the local E2E environment: seed catalog + gateway, optionally
-# point WordPress + Ax402 upstream at WP_BASE_URL (public tunnel).
+# point WordPress + Launa upstream at WP_BASE_URL (public tunnel).
 set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$ROOT"
@@ -27,20 +27,20 @@ if [[ -n "$WP_BASE_URL_VAL" ]]; then
   npx wp-env run cli wp option update home "$WP_BASE_URL_VAL"
   npx wp-env run cli wp option update siteurl "$WP_BASE_URL_VAL"
 
-  echo "==> Syncing Ax402 API upstream_base_url (onboard / refresh)…"
+  echo "==> Syncing Launa API upstream_base_url (onboard / refresh)…"
   # Escape for PHP without requiring host `php` (wp-env images have PHP; macOS hosts often do not).
   BASE_PHP="$(
     WP_BASE_URL_VAL="$WP_BASE_URL_VAL" python3 -c 'import json, os; print(json.dumps(os.environ["WP_BASE_URL_VAL"]))'
   )"
   npx wp-env run cli wp eval "
 \$base = ${BASE_PHP};
-\$client = Ax402_WC_Settings::client();
+\$client = Launa_WC_Settings::client();
 if (\$client === null) {
   echo \"skip upstream: missing API client (API key?)\n\";
   return;
 }
 try {
-  \$onboarded = Ax402_WC_Store_Onboarding::ensure_api(\$client);
+  \$onboarded = Launa_WC_Store_Onboarding::ensure_api(\$client);
 } catch (Throwable \$e) {
   echo \"onboard failed: \" . \$e->getMessage() . \"\n\";
   return;
@@ -55,13 +55,13 @@ if (\$current === rtrim(\$base, '/')) {
   echo \"upstream updated to {\$base}\n\";
 }
 echo \"api_id={\$api_id} gateway_host={\$onboarded['gateway_host']}\n\";
-\$cors = Ax402_WC_Gateway_Cors::ensure_store_origins(\$api_id, \$client);
+\$cors = Launa_WC_Gateway_Cors::ensure_store_origins(\$api_id, \$client);
 if (\$cors['ok']) {
   echo \"cors origins: \" . implode(', ', \$cors['origins']) . \"\n\";
 } else {
   echo \"cors sync warning: {\$cors['error']}\n\";
 }
-\$settings = Ax402_WC_Settings::all();
+\$settings = Launa_WC_Settings::all();
 if (\$settings['hedera_api_id'] !== '') {
   echo \"legacy hedera_api_id={\$settings['hedera_api_id']} (kept for in-flight orders; new payments use api_id)\n\";
 }
@@ -73,7 +73,7 @@ fi
 
 echo "==> E2E readiness check…"
 npx wp-env run cli wp eval '
-$g = new Ax402_WC_Gateway_Ax402();
+$g = new Launa_WC_Gateway_Launa();
 $available = $g->is_available() ? "yes" : "no";
 $products = get_posts([
   "post_type" => "product",
@@ -83,7 +83,7 @@ $products = get_posts([
 ]);
 $coming = get_option("woocommerce_coming_soon", "no");
 $home = defined("WP_HOME") ? WP_HOME : get_option("home");
-$s = Ax402_WC_Settings::all();
+$s = Launa_WC_Settings::all();
 echo "is_available={$available}\n";
 echo "products=" . count($products) . "\n";
 echo "coming_soon={$coming}\n";
@@ -92,7 +92,7 @@ echo "network={$s["network_mode"]}\n";
 echo "api_slug={$s["api_slug"]}\n";
 echo "gateway_host={$s["gateway_host"]}\n";
 if ($available !== "yes") {
-  echo "NOT READY: fill AX402_API_KEY + AX402_PAY_TO_ADDRESS in .env (and Hedera vars if testing Hedera) and re-run.\n";
+  echo "NOT READY: fill LAUNA_API_KEY + LAUNA_PAY_TO_ADDRESS in .env (AX402_* still works) and re-run.\n";
   exit(1);
 }
 if (count($products) < 1) {
@@ -104,7 +104,7 @@ if ($coming === "yes") {
   exit(1);
 }
 echo "READY for local shop + checkout.\n";
-echo "For live Ax402 settle, ensure WP_HOME is a public HTTPS URL and ngrok (or similar) is running.\n";
+echo "For live Launa settle, ensure WP_HOME is a public HTTPS URL and ngrok (or similar) is running.\n";
 '
 
 cat <<EOF

@@ -7,7 +7,7 @@ defined('ABSPATH') || exit;
 /**
  * 1:1 USD rates for common stablecoins.
  */
-final class Ax402_WC_Stablecoin_One_To_One_Rates implements Ax402_WC_Exchange_Rate_Provider
+final class Launa_WC_Stablecoin_One_To_One_Rates implements Launa_WC_Exchange_Rate_Provider
 {
     /** @var list<string> */
     public const STABLECOINS = ['USDC', 'USDT', 'USD', 'DAI', 'USDBC', 'EURC'];

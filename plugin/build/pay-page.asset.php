@@ -1,3 +1,1 @@
-<?php
-defined('ABSPATH') || exit;
-return array('dependencies' => array('react', 'react-jsx-runtime', 'wp-element'), 'version' => '2dc54eaebc66d298fa5b');
+<?php return array('dependencies' => array('react', 'react-jsx-runtime', 'wp-element'), 'version' => 'c2ce02b03f1c51b88ae0');

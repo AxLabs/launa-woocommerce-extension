@@ -4,12 +4,12 @@ declare(strict_types=1);
 defined('ABSPATH') || exit;
 
 /**
- * Same-origin proxy for browser paywall → Ax402 gateway.
+ * Same-origin proxy for browser paywall → Launa gateway.
  *
  * Prefer direct gateway calls with control-plane CORS. This proxy remains as a
  * fallback for gateways that have not yet redeployed per-API origin support.
  */
-final class Ax402_WC_Gateway_Proxy_Controller
+final class Launa_WC_Gateway_Proxy_Controller
 {
     private const FORWARD_REQUEST_HEADERS = [
         'payment-signature',
@@ -27,23 +27,25 @@ final class Ax402_WC_Gateway_Proxy_Controller
 
     public function register(): void
     {
-        register_rest_route(
-            'ax402/v1',
-            '/pay-proxy/(?P<order_key>[A-Za-z0-9_-]+)',
-            [
+        foreach (Launa_WC_Rest::namespaces() as $namespace) {
+            register_rest_route(
+                $namespace,
+                '/pay-proxy/(?P<order_key>[A-Za-z0-9_-]+)',
                 [
-                    'methods' => ['GET', 'POST', 'HEAD'],
-                    'callback' => [$this, 'proxy'],
-                    'permission_callback' => '__return_true',
-                    'args' => [
-                        'order_key' => [
-                            'required' => true,
-                            'type' => 'string',
+                    [
+                        'methods' => ['GET', 'POST', 'HEAD'],
+                        'callback' => [$this, 'proxy'],
+                        'permission_callback' => '__return_true',
+                        'args' => [
+                            'order_key' => [
+                                'required' => true,
+                                'type' => 'string',
+                            ],
                         ],
                     ],
-                ],
-            ]
-        );
+                ]
+            );
+        }
     }
 
     /**
@@ -55,16 +57,16 @@ final class Ax402_WC_Gateway_Proxy_Controller
         $order_id = wc_get_order_id_by_order_key($order_key);
         $order = $order_id ? wc_get_order($order_id) : false;
         if (!$order instanceof WC_Order) {
-            return new WP_Error('ax402_not_found', 'Order not found', ['status' => 404]);
+            return new WP_Error('launa_not_found', 'Order not found', ['status' => 404]);
         }
 
-        $gateway_url = (string) $order->get_meta(Ax402_WC_Order_Payment::META_GATEWAY_URL);
+        $gateway_url = (string) $order->get_meta(Launa_WC_Order_Payment::META_GATEWAY_URL);
         if ($gateway_url === '' || !wp_http_validate_url($gateway_url)) {
-            return new WP_Error('ax402_no_gateway', 'Gateway URL missing for order', ['status' => 409]);
+            return new WP_Error('launa_no_gateway', 'Gateway URL missing for order', ['status' => 409]);
         }
 
         if (!$this->is_allowed_gateway_url($gateway_url, $order)) {
-            return new WP_Error('ax402_forbidden_target', 'Gateway URL is not allowed', ['status' => 403]);
+            return new WP_Error('launa_forbidden_target', 'Gateway URL is not allowed', ['status' => 403]);
         }
 
         $method = strtoupper($request->get_method());
@@ -90,7 +92,7 @@ final class Ax402_WC_Gateway_Proxy_Controller
 
         $response = wp_remote_request($gateway_url, $args);
         if (is_wp_error($response)) {
-            return new WP_Error('ax402_proxy_failed', $response->get_error_message(), ['status' => 502]);
+            return new WP_Error('launa_proxy_failed', $response->get_error_message(), ['status' => 502]);
         }
 
         $status = (int) wp_remote_retrieve_response_code($response);
@@ -131,12 +133,12 @@ final class Ax402_WC_Gateway_Proxy_Controller
         }
 
         $path = (string) ($parts['path'] ?? '');
-        $expected_path = (string) $order->get_meta(Ax402_WC_Order_Payment::META_PATH);
+        $expected_path = (string) $order->get_meta(Launa_WC_Order_Payment::META_PATH);
         if ($expected_path !== '' && $path !== $expected_path) {
             return false;
         }
 
-        $settings = Ax402_WC_Settings::all();
+        $settings = Launa_WC_Settings::all();
         $host = strtolower((string) $parts['host']);
         $allowed_hosts = array_filter([
             strtolower((string) $settings['gateway_host']),
@@ -146,6 +148,8 @@ final class Ax402_WC_Gateway_Proxy_Controller
             return true;
         }
 
-        return str_ends_with($host, '.ax402.io') || str_ends_with($host, '.localhost');
+        return str_ends_with($host, '.launa.io')
+            || str_ends_with($host, '.ax402.io')
+            || str_ends_with($host, '.localhost');
     }
 }

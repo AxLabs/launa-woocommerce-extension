@@ -4,20 +4,20 @@ declare(strict_types=1);
 defined('ABSPATH') || exit;
 
 /**
- * WooCommerce payment gateway for Ax402 / x402.
+ * WooCommerce payment gateway for Launa / x402.
  */
-final class Ax402_WC_Gateway_Ax402 extends WC_Payment_Gateway
+final class Launa_WC_Gateway_Launa extends WC_Payment_Gateway
 {
-    public const GATEWAY_ID = 'ax402';
+    public const GATEWAY_ID = 'launa';
 
     public function __construct()
     {
         $this->id = self::GATEWAY_ID;
-        $this->method_title = __('Ax402 (x402)', 'ax402-for-woocommerce');
+        $this->method_title = __('Launa (x402)', 'ax402-for-woocommerce');
         $this->method_description = sprintf(
-            /* translators: 1: Ax402 link open, 2: close, 3: x402 link open, 4: close, 5: UCP link open, 6: close */
-            __('%1$sAx402%2$s is an %3$sx402%4$s payment provider for shoppers and agents, with Universal Commerce Protocol (%5$sUCP%6$s) support. Catalog currency stays USD while you charge on stablecoins and other supported tokens.', 'ax402-for-woocommerce'),
-            '<a href="https://ax402.io" target="_blank" rel="noopener noreferrer">',
+            /* translators: 1: Launa link open, 2: close, 3: x402 link open, 4: close, 5: UCP link open, 6: close */
+            __('%1$sLauna%2$s is an %3$sx402%4$s payment provider for shoppers and agents, with Universal Commerce Protocol (%5$sUCP%6$s) support. Catalog currency stays USD while you charge on stablecoins and other supported tokens.', 'ax402-for-woocommerce'),
+            '<a href="https://launa.io" target="_blank" rel="noopener noreferrer">',
             '</a>',
             '<a href="https://x402.org" target="_blank" rel="noopener noreferrer">',
             '</a>',
@@ -26,18 +26,18 @@ final class Ax402_WC_Gateway_Ax402 extends WC_Payment_Gateway
         );
         $this->has_fields = false;
         $this->supports = ['products'];
-        $icon_path = AX402_WC_PLUGIN_DIR . 'assets/ax402-icon.svg';
-        $icon_ver = is_readable($icon_path) ? (string) filemtime($icon_path) : AX402_WC_VERSION;
-        $this->icon = add_query_arg('v', $icon_ver, AX402_WC_PLUGIN_URL . 'assets/ax402-icon.svg');
+        $icon_path = LAUNA_WC_PLUGIN_DIR . 'assets/launa-icon.svg';
+        $icon_ver = is_readable($icon_path) ? (string) filemtime($icon_path) : LAUNA_WC_VERSION;
+        $this->icon = add_query_arg('v', $icon_ver, LAUNA_WC_PLUGIN_URL . 'assets/launa-icon.svg');
 
         $this->init_form_fields();
         $this->init_settings();
         $this->sync_gateway_slug_from_plugin_settings();
 
-        $this->title = __('Pay with Ax402', 'ax402-for-woocommerce');
+        $this->title = __('Pay with Launa', 'ax402-for-woocommerce');
         $this->description =
             esc_html__(
-                'Pay with a wallet using stablecoins or supported tokens via Ax402 using the x402 standard. For people and AI agents.',
+                'Pay with a wallet using stablecoins or supported tokens via Launa using the x402 standard. For people and AI agents.',
                 'ax402-for-woocommerce'
             )
             . ' <strong>'
@@ -65,21 +65,21 @@ final class Ax402_WC_Gateway_Ax402 extends WC_Payment_Gateway
         }
 
         wp_enqueue_style(
-            'ax402-wc-admin-settings',
-            AX402_WC_PLUGIN_URL . 'assets/admin-settings.css',
+            'launa-wc-admin-settings',
+            LAUNA_WC_PLUGIN_URL . 'assets/admin-settings.css',
             [],
-            AX402_WC_VERSION
+            LAUNA_WC_VERSION
         );
         wp_enqueue_script(
-            'ax402-wc-admin-settings',
-            AX402_WC_PLUGIN_URL . 'assets/admin-settings.js',
+            'launa-wc-admin-settings',
+            LAUNA_WC_PLUGIN_URL . 'assets/admin-settings.js',
             [],
-            AX402_WC_VERSION,
+            LAUNA_WC_VERSION,
             true
         );
         wp_localize_script(
-            'ax402-wc-admin-settings',
-            'ax402AdminSettings',
+            'launa-wc-admin-settings',
+            'launaAdminSettings',
             [
                 'showAdvanced' => __('Show', 'ax402-for-woocommerce'),
                 'hideAdvanced' => __('Hide', 'ax402-for-woocommerce'),
@@ -116,30 +116,30 @@ final class Ax402_WC_Gateway_Ax402 extends WC_Payment_Gateway
 
     public function init_form_fields(): void
     {
-        $plugin = Ax402_WC_Settings::all();
+        $plugin = Launa_WC_Settings::all();
 
         $this->form_fields = [
             'account_title' => [
                 'title' => __('Account', 'ax402-for-woocommerce'),
                 'type' => 'title',
                 'description' => __(
-                    'Connect this store to Ax402. Enabling the method only offers it at checkout once the checklist above is ready.',
+                    'Connect this store to Launa. Enabling the method only offers it at checkout once the checklist above is ready.',
                     'ax402-for-woocommerce'
                 ),
             ],
             'enabled' => [
                 'title' => __('Enable/Disable', 'ax402-for-woocommerce'),
                 'type' => 'checkbox',
-                'label' => __('Enable Ax402 payments', 'ax402-for-woocommerce'),
+                'label' => __('Enable Launa payments', 'ax402-for-woocommerce'),
                 'default' => 'no',
             ],
             'api_key' => [
-                'title' => __('Ax402 API Key', 'ax402-for-woocommerce'),
-                'type' => 'ax402_api_key',
+                'title' => __('Launa API Key', 'ax402-for-woocommerce'),
+                'type' => 'launa_api_key',
                 'description' => sprintf(
                     /* translators: 1: opening anchor tag, 2: closing anchor tag */
-                    __('Create a key at %1$sAx402%2$s: create an account, open API keys, name it something like “Ax402 for WooCommerce”, select All scopes, then click Create API Key. Enter a new key only when you want to replace the current one.', 'ax402-for-woocommerce'),
-                    '<a href="https://ax402.io" target="_blank" rel="noopener noreferrer">',
+                    __('Create a key at %1$sLauna%2$s: create an account, open API keys, name it something like “Launa for WooCommerce”, select All scopes, then click Create API Key. Enter a new key only when you want to replace the current one.', 'ax402-for-woocommerce'),
+                    '<a href="https://launa.io" target="_blank" rel="noopener noreferrer">',
                     '</a>'
                 ),
                 'default' => '',
@@ -161,7 +161,7 @@ final class Ax402_WC_Gateway_Ax402 extends WC_Payment_Gateway
                 ),
                 'default' => $plugin['pay_to_address'],
                 'custom_attributes' => [
-                    'id' => 'woocommerce_ax402_pay_to_address',
+                    'id' => 'woocommerce_launa_pay_to_address',
                 ],
             ],
             'pay_to_hedera_account_id' => [
@@ -173,9 +173,9 @@ final class Ax402_WC_Gateway_Ax402 extends WC_Payment_Gateway
                 ),
                 'default' => $plugin['pay_to_hedera_account_id'] ?? '',
                 'custom_attributes' => [
-                    'id' => 'woocommerce_ax402_pay_to_hedera_account_id',
+                    'id' => 'woocommerce_launa_pay_to_hedera_account_id',
                     'autocomplete' => 'off',
-                    'data-ax402-hedera-payto' => '1',
+                    'data-launa-hedera-payto' => '1',
                 ],
             ],
             'walletconnect_project_id' => [
@@ -189,8 +189,8 @@ final class Ax402_WC_Gateway_Ax402 extends WC_Payment_Gateway
                 ),
                 'default' => $plugin['walletconnect_project_id'] ?? '',
                 'custom_attributes' => [
-                    'id' => 'woocommerce_ax402_walletconnect_project_id',
-                    'data-ax402-hedera-payto' => '1',
+                    'id' => 'woocommerce_launa_walletconnect_project_id',
+                    'data-launa-hedera-payto' => '1',
                 ],
             ],
             'tokens_title' => [
@@ -200,9 +200,9 @@ final class Ax402_WC_Gateway_Ax402 extends WC_Payment_Gateway
             ],
             'settlement_tokens' => [
                 'title' => __('Settlement tokens', 'ax402-for-woocommerce'),
-                'type' => 'ax402_tokens',
+                'type' => 'launa_tokens',
                 'description' => __(
-                    'Live list from Ax402 /config/platform. Customers pick one on the pay page. Stablecoins settle 1:1 with the USD order total; other tokens need a resolvable exchange rate.',
+                    'Live list from Launa /config/platform. Customers pick one on the pay page. Stablecoins settle 1:1 with the USD order total; other tokens need a resolvable exchange rate.',
                     'ax402-for-woocommerce'
                 ),
             ],
@@ -213,7 +213,7 @@ final class Ax402_WC_Gateway_Ax402 extends WC_Payment_Gateway
             ],
             'recent_payments' => [
                 'title' => __('Latest settlements', 'ax402-for-woocommerce'),
-                'type' => 'ax402_recent_payments',
+                'type' => 'launa_recent_payments',
             ],
             'agents_title' => [
                 'title' => __('Agents', 'ax402-for-woocommerce'),
@@ -228,7 +228,7 @@ final class Ax402_WC_Gateway_Ax402 extends WC_Payment_Gateway
                     'ax402-for-woocommerce'
                 ),
                 'description' => __(
-                    'On by default. Independent of the human checkout method. Buying agents discover the store, browse the catalog, and pay via x402 at checkout complete. Does not change the pay page or the legacy /wp-json/ax402/v1 agent API.',
+                    'On by default. Independent of the human checkout method. Buying agents discover the store, browse the catalog, and pay via x402 at checkout complete. Does not change the pay page or the legacy /wp-json/launa/v1 agent API.',
                     'ax402-for-woocommerce'
                 ),
                 'default' => ($plugin['ucp_enabled'] ?? 'yes') === 'yes' ? 'yes' : 'no',
@@ -250,9 +250,9 @@ final class Ax402_WC_Gateway_Ax402 extends WC_Payment_Gateway
             'show_powered_by' => [
                 'title' => __('Pay page credit', 'ax402-for-woocommerce'),
                 'type' => 'checkbox',
-                'label' => __('Show Ax402 credit on the pay page', 'ax402-for-woocommerce'),
+                'label' => __('Show Launa credit on the pay page', 'ax402-for-woocommerce'),
                 'description' => __(
-                    'Optional front-facing “Powered by Ax402” link. Off by default.',
+                    'Optional front-facing “Powered by Launa” link. Off by default.',
                     'ax402-for-woocommerce'
                 ),
                 'default' => 'no',
@@ -260,24 +260,24 @@ final class Ax402_WC_Gateway_Ax402 extends WC_Payment_Gateway
             'advanced_title' => [
                 'title' => __('Advanced', 'ax402-for-woocommerce'),
                 'type' => 'title',
-                'class' => 'ax402-advanced-heading',
+                'class' => 'launa-advanced-heading',
                 'description' => '',
             ],
             'base_url' => [
-                'title' => __('Ax402 API base URL', 'ax402-for-woocommerce'),
-                'type' => 'ax402_base_url',
+                'title' => __('Launa API base URL', 'ax402-for-woocommerce'),
+                'type' => 'launa_base_url',
                 'description' => sprintf(
                     /* translators: %s: environment variable name */
                     __('Development and testing only. This value cannot be edited here. Set %s to change it.', 'ax402-for-woocommerce'),
-                    '<code>AX402_BASE_URL</code>'
+                    '<code>LAUNA_BASE_URL</code>'
                 ),
-                'default' => $plugin['base_url'] ?: 'https://api.ax402.io',
+                'default' => $plugin['base_url'] ?: 'https://api.launa.io',
             ],
             'network_mode' => [
                 'title' => __('Environment seed', 'ax402-for-woocommerce'),
                 'type' => 'select',
                 'description' => __(
-                    'Only used for Ax402 gateway hostname onboarding (dev vs production platform domain). Settlement networks and tokens always come from the live platform sync below.',
+                    'Only used for Launa gateway hostname onboarding (dev vs production platform domain). Settlement networks and tokens always come from the live platform sync below.',
                     'ax402-for-woocommerce'
                 ),
                 'options' => [
@@ -297,9 +297,9 @@ final class Ax402_WC_Gateway_Ax402 extends WC_Payment_Gateway
             ],
             'gateway_cors' => [
                 'title' => __('Gateway CORS', 'ax402-for-woocommerce'),
-                'type' => 'ax402_cors_status',
+                'type' => 'launa_cors_status',
                 'description' => __(
-                    'Store origins are pushed to Ax402 so the pay page can call the gateway directly from the browser.',
+                    'Store origins are pushed to Launa so the pay page can call the gateway directly from the browser.',
                     'ax402-for-woocommerce'
                 ),
             ],
@@ -307,11 +307,11 @@ final class Ax402_WC_Gateway_Ax402 extends WC_Payment_Gateway
                 'title' => __('Settlement reconcile', 'ax402-for-woocommerce'),
                 'type' => 'checkbox',
                 'label' => __(
-                    'Complete unpaid orders from Ax402 settlements when gateway fulfill is missing',
+                    'Complete unpaid orders from Launa settlements when gateway fulfill is missing',
                     'ax402-for-woocommerce'
                 ),
                 'description' => __(
-                    'Off by default. When enabled, Ax402 settlements can complete unpaid orders if gateway fulfill is missing. Pay-page and agent status polls still confirm payment when this is off.',
+                    'Off by default. When enabled, Launa settlements can complete unpaid orders if gateway fulfill is missing. Pay-page and agent status polls still confirm payment when this is off.',
                     'ax402-for-woocommerce'
                 ),
                 'default' => ($plugin['settlement_reconcile'] ?? 'no') === 'yes' ? 'yes' : 'no',
@@ -320,12 +320,12 @@ final class Ax402_WC_Gateway_Ax402 extends WC_Payment_Gateway
     }
 
     /**
-     * Read-only API base URL. Change via AX402_BASE_URL, not this screen.
+     * Read-only API base URL. Change via LAUNA_BASE_URL, not this screen.
      *
      * @param string $key
      * @param array<string, mixed> $data
      */
-    public function generate_ax402_base_url_html($key, $data): string
+    public function generate_launa_base_url_html($key, $data): string
     {
         $field_key = $this->get_field_key($key);
         $data = wp_parse_args($data, [
@@ -334,7 +334,7 @@ final class Ax402_WC_Gateway_Ax402 extends WC_Payment_Gateway
             'css' => '',
             'class' => '',
         ]);
-        $value = Ax402_WC_Settings::all()['base_url'] ?: 'https://api.ax402.io';
+        $value = Launa_WC_Settings::all()['base_url'] ?: 'https://api.launa.io';
 
         ob_start();
         ?>
@@ -372,7 +372,7 @@ final class Ax402_WC_Gateway_Ax402 extends WC_Payment_Gateway
      * @param string $key
      * @param array<string, mixed> $data
      */
-    public function generate_ax402_api_key_html($key, $data): string
+    public function generate_launa_api_key_html($key, $data): string
     {
         $field_key = $this->get_field_key($key);
         $data = wp_parse_args($data, [
@@ -381,7 +381,7 @@ final class Ax402_WC_Gateway_Ax402 extends WC_Payment_Gateway
             'css' => '',
             'class' => '',
         ]);
-        $current = Ax402_WC_Settings::all()['api_key'];
+        $current = Launa_WC_Settings::all()['api_key'];
         $mask = $current !== '' ? str_repeat('*', strlen($current)) : '';
 
         ob_start();
@@ -414,18 +414,18 @@ final class Ax402_WC_Gateway_Ax402 extends WC_Payment_Gateway
     }
 
     /**
-     * Last settlements from Ax402 for this store API.
+     * Last settlements from Launa for this store API.
      *
      * @param string $key
      * @param array<string, mixed> $data
      */
-    public function generate_ax402_recent_payments_html($key, $data): string
+    public function generate_launa_recent_payments_html($key, $data): string
     {
         unset($key);
         $data = wp_parse_args($data, [
             'title' => '',
         ]);
-        $snapshot = Ax402_WC_Recent_Settlements::snapshot();
+        $snapshot = Launa_WC_Recent_Settlements::snapshot();
 
         ob_start();
         ?>
@@ -434,17 +434,17 @@ final class Ax402_WC_Gateway_Ax402 extends WC_Payment_Gateway
                 <label><?php echo esc_html((string) $data['title']); ?></label>
             </th>
             <td class="forminp">
-                <div class="ax402-recent-payments">
+                <div class="launa-recent-payments">
                     <?php if (!$snapshot['connected']) : ?>
-                        <p class="ax402-recent-payments__empty">
+                        <p class="launa-recent-payments__empty">
                             <?php echo esc_html__('Payments will appear here after the store is connected.', 'ax402-for-woocommerce'); ?>
                         </p>
                     <?php elseif ($snapshot['error'] !== '') : ?>
-                        <p class="ax402-recent-payments__empty">
+                        <p class="launa-recent-payments__empty">
                             <?php echo esc_html($snapshot['error']); ?>
                         </p>
                     <?php elseif ($snapshot['rows'] === []) : ?>
-                        <p class="ax402-recent-payments__empty">
+                        <p class="launa-recent-payments__empty">
                             <?php echo esc_html__('No payments yet.', 'ax402-for-woocommerce'); ?>
                         </p>
                     <?php else : ?>
@@ -460,22 +460,22 @@ final class Ax402_WC_Gateway_Ax402 extends WC_Payment_Gateway
                             <tbody>
                                 <?php foreach ($snapshot['rows'] as $row) : ?>
                                     <tr>
-                                        <td class="ax402-recent-payments__when">
+                                        <td class="launa-recent-payments__when">
                                             <?php echo esc_html($row['when']); ?>
                                             <?php if ($row['when_tz'] !== '') : ?>
-                                                <span class="ax402-recent-payments__when-tz"><?php echo esc_html($row['when_tz']); ?></span>
+                                                <span class="launa-recent-payments__when-tz"><?php echo esc_html($row['when_tz']); ?></span>
                                             <?php endif; ?>
                                         </td>
                                         <td><?php echo esc_html($row['amount']); ?></td>
                                         <td><?php echo esc_html($row['network']); ?></td>
                                         <td>
-                                            <div class="ax402-recent-payments__tx">
+                                            <div class="launa-recent-payments__tx">
                                                 <code><?php echo esc_html($row['tx']); ?></code>
                                                 <?php if ($row['tx_full'] !== '') : ?>
                                                     <button
                                                         type="button"
-                                                        class="ax402-copy-tx"
-                                                        data-ax402-copy="<?php echo esc_attr($row['tx_full']); ?>"
+                                                        class="launa-copy-tx"
+                                                        data-launa-copy="<?php echo esc_attr($row['tx_full']); ?>"
                                                         aria-label="<?php echo esc_attr__('Copy transaction', 'ax402-for-woocommerce'); ?>"
                                                     >
                                                         <span class="dashicons dashicons-admin-page" aria-hidden="true"></span>
@@ -487,16 +487,16 @@ final class Ax402_WC_Gateway_Ax402 extends WC_Payment_Gateway
                                     </tr>
                                 <?php endforeach; ?>
                                 <?php if (!empty($snapshot['has_more'])) : ?>
-                                    <tr class="ax402-recent-payments__more">
+                                    <tr class="launa-recent-payments__more">
                                         <td colspan="4">...</td>
                                     </tr>
                                 <?php endif; ?>
                             </tbody>
                         </table>
                     <?php endif; ?>
-                    <p class="ax402-recent-payments__income">
-                        <a href="<?php echo esc_url(Ax402_WC_Recent_Settlements::INCOME_URL); ?>" target="_blank" rel="noopener noreferrer">
-                            <?php echo esc_html__('View all income on Ax402', 'ax402-for-woocommerce'); ?>
+                    <p class="launa-recent-payments__income">
+                        <a href="<?php echo esc_url(Launa_WC_Recent_Settlements::INCOME_URL); ?>" target="_blank" rel="noopener noreferrer">
+                            <?php echo esc_html__('View all income on Launa', 'ax402-for-woocommerce'); ?>
                         </a>
                     </p>
                 </div>
@@ -512,10 +512,10 @@ final class Ax402_WC_Gateway_Ax402 extends WC_Payment_Gateway
      * @param string $key
      * @param mixed $value
      */
-    public function validate_ax402_base_url_field($key, $value): string
+    public function validate_launa_base_url_field($key, $value): string
     {
         unset($key, $value);
-        return Ax402_WC_Settings::persisted_base_url();
+        return Launa_WC_Settings::persisted_base_url();
     }
 
     /**
@@ -524,7 +524,7 @@ final class Ax402_WC_Gateway_Ax402 extends WC_Payment_Gateway
      * @param string $key
      * @param mixed $value
      */
-    public function validate_ax402_api_key_field($key, $value): string
+    public function validate_launa_api_key_field($key, $value): string
     {
         unset($key);
         $submitted = trim((string) $value);
@@ -539,7 +539,7 @@ final class Ax402_WC_Gateway_Ax402 extends WC_Payment_Gateway
      * @param string $key
      * @param mixed $value
      */
-    public function validate_ax402_recent_payments_field($key, $value): string
+    public function validate_launa_recent_payments_field($key, $value): string
     {
         unset($key, $value);
         return '';
@@ -552,12 +552,12 @@ final class Ax402_WC_Gateway_Ax402 extends WC_Payment_Gateway
     public function validate_pay_to_address_field($key, $value): string
     {
         $submitted = trim((string) $value);
-        $parsed = Ax402_WC_Evm_Address::parse($submitted);
+        $parsed = Launa_WC_Evm_Address::parse($submitted);
         if ($parsed['ok']) {
             return $parsed['checksummed'];
         }
 
-        $message = Ax402_WC_Evm_Address::error_message($parsed['error']);
+        $message = Launa_WC_Evm_Address::error_message($parsed['error']);
         if ($message !== '') {
             WC_Admin_Settings::add_error($message);
         }
@@ -572,12 +572,12 @@ final class Ax402_WC_Gateway_Ax402 extends WC_Payment_Gateway
     public function validate_pay_to_hedera_account_id_field($key, $value): string
     {
         $submitted = trim(sanitize_text_field((string) $value));
-        $parsed = Ax402_WC_Settings::parse_hedera_account_id($submitted);
+        $parsed = Launa_WC_Settings::parse_hedera_account_id($submitted);
         if ($parsed['ok']) {
             return $parsed['value'];
         }
 
-        $message = Ax402_WC_Settings::hedera_error_message($parsed['error']);
+        $message = Launa_WC_Settings::hedera_error_message($parsed['error']);
         if ($message !== '') {
             WC_Admin_Settings::add_error($message);
         }
@@ -589,14 +589,14 @@ final class Ax402_WC_Gateway_Ax402 extends WC_Payment_Gateway
      * @param string $key
      * @param array<string, mixed> $data
      */
-    public function generate_ax402_cors_status_html($key, $data): string
+    public function generate_launa_cors_status_html($key, $data): string
     {
         unset($key);
         $data = wp_parse_args($data, [
             'title' => '',
             'description' => '',
         ]);
-        $cors = Ax402_WC_Gateway_Cors::status();
+        $cors = Launa_WC_Gateway_Cors::status();
         $store = $cors['store_origins'];
 
         ob_start();
@@ -654,7 +654,7 @@ final class Ax402_WC_Gateway_Ax402 extends WC_Payment_Gateway
      * @param string $key
      * @param array<string, mixed> $data
      */
-    public function generate_ax402_tokens_html($key, $data): string
+    public function generate_launa_tokens_html($key, $data): string
     {
         $field_key = $this->get_field_key($key);
         $refresh_key = $this->get_field_key('refresh_platform_tokens');
@@ -663,23 +663,23 @@ final class Ax402_WC_Gateway_Ax402 extends WC_Payment_Gateway
             'description' => '',
         ]);
 
-        $settings = Ax402_WC_Settings::all();
+        $settings = Launa_WC_Settings::all();
         $current_base = rtrim($settings['base_url'], '/');
 
         // Always fetch live platform tokens when credentials exist so the admin
         // list tracks /config/platform (not a stale cache from another base URL).
         $sync_error = '';
-        if (Ax402_WC_Settings::client() !== null) {
-            $sync = Ax402_WC_Platform_Config_Store::sync();
+        if (Launa_WC_Settings::client() !== null) {
+            $sync = Launa_WC_Platform_Config_Store::sync();
             if (!$sync['ok'] && $sync['error'] !== '') {
                 $sync_error = $sync['error'];
             }
             // Bust FX cache on every settings render so ZCHF/XGAS pick up new
             // /exchange-rates data (previously an empty rates:[] could stick for 5m).
-            Ax402_WC_Control_Plane_Exchange_Rates::clear_cache_for_base_url($current_base);
+            Launa_WC_Control_Plane_Exchange_Rates::clear_cache_for_base_url($current_base);
         }
 
-        $cache = Ax402_WC_Platform_Config_Store::get();
+        $cache = Launa_WC_Platform_Config_Store::get();
         $cache_base = rtrim((string) ($cache['source_base_url'] ?? ''), '/');
         $cache_stale = $cache['platform'] !== []
             && $current_base !== ''
@@ -689,10 +689,10 @@ final class Ax402_WC_Gateway_Ax402 extends WC_Payment_Gateway
             );
 
         $platform = $cache['platform'];
-        $tokens = Ax402_WC_Platform_Tokens::enabled_tokens($platform);
+        $tokens = Launa_WC_Platform_Tokens::enabled_tokens($platform);
         $selected = $settings['enabled_token_ids'];
         if ($selected === [] && $tokens !== []) {
-            $selected = Ax402_WC_Platform_Tokens::default_enabled_token_ids(
+            $selected = Launa_WC_Platform_Tokens::default_enabled_token_ids(
                 $platform,
                 $settings['network_mode']
             );
@@ -705,7 +705,7 @@ final class Ax402_WC_Gateway_Ax402 extends WC_Payment_Gateway
             );
             $selected = array_values(array_intersect($selected, $valid_ids));
         }
-        $rates = Ax402_WC_Composite_Exchange_Rates::default(null, true);
+        $rates = Launa_WC_Composite_Exchange_Rates::default(null, true);
         $display_error = $sync_error !== '' ? $sync_error : (string) ($cache['error'] ?? '');
 
         ob_start();
@@ -742,7 +742,7 @@ final class Ax402_WC_Gateway_Ax402 extends WC_Payment_Gateway
                 <?php if ($cache_stale) : ?>
                     <p class="description" style="color:#b32d2e;margin-bottom:0.75em">
                         <?php echo esc_html__(
-                            'Cached tokens are from a different API base URL. Save settings or click “Refresh tokens from Ax402”.',
+                            'Cached tokens are from a different API base URL. Save settings or click “Refresh tokens from Launa”.',
                             'ax402-for-woocommerce'
                         ); ?>
                     </p>
@@ -775,17 +775,17 @@ final class Ax402_WC_Gateway_Ax402 extends WC_Payment_Gateway
                                     <label style="display:flex;gap:0.65em;align-items:flex-start">
                                         <input
                                             type="checkbox"
-                                            class="ax402-settlement-token"
+                                            class="launa-settlement-token"
                                             name="<?php echo esc_attr($field_key); ?>[]"
                                             value="<?php echo esc_attr($id); ?>"
                                             data-network="<?php echo esc_attr($network); ?>"
-                                            data-hedera="<?php echo Ax402_WC_Platform_Tokens::is_hedera_network($network) ? '1' : '0'; ?>"
+                                            data-hedera="<?php echo Launa_WC_Platform_Tokens::is_hedera_network($network) ? '1' : '0'; ?>"
                                             <?php checked($checked); ?>
                                             <?php disabled(!$rate_ok); ?>
                                         />
                                         <span>
                                             <strong><?php echo esc_html($symbol); ?></strong>
-                                            · <?php echo esc_html(Ax402_WC_Platform_Tokens::network_label($network)); ?>
+                                            · <?php echo esc_html(Launa_WC_Platform_Tokens::network_label($network)); ?>
                                             <br />
                                             <span class="description">
                                                 <?php
@@ -800,7 +800,7 @@ final class Ax402_WC_Gateway_Ax402 extends WC_Payment_Gateway
                                                 ?>
                                                 <?php if ($rate_ok) : ?>
                                                     · <?php
-                                                    if (Ax402_WC_Stablecoin_One_To_One_Rates::is_stablecoin($symbol)) {
+                                                    if (Launa_WC_Stablecoin_One_To_One_Rates::is_stablecoin($symbol)) {
                                                         echo esc_html__('rate OK (1:1 USD)', 'ax402-for-woocommerce');
                                                     } else {
                                                         echo esc_html(
@@ -824,20 +824,20 @@ final class Ax402_WC_Gateway_Ax402 extends WC_Payment_Gateway
                     </fieldset>
                 <?php endif; ?>
                 <p style="margin:0.9em 0 0.35em">
-                    <input type="hidden" name="<?php echo esc_attr($refresh_key); ?>" id="<?php echo esc_attr($refresh_key); ?>" value="0" data-ax402-refresh-flag />
+                    <input type="hidden" name="<?php echo esc_attr($refresh_key); ?>" id="<?php echo esc_attr($refresh_key); ?>" value="0" data-launa-refresh-flag />
                     <button
                         type="submit"
                         class="button button-secondary"
                         name="save"
-                        value="<?php echo esc_attr__('Refresh tokens from Ax402', 'ax402-for-woocommerce'); ?>"
-                        data-ax402-refresh-tokens
+                        value="<?php echo esc_attr__('Refresh tokens from Launa', 'ax402-for-woocommerce'); ?>"
+                        data-launa-refresh-tokens
                     >
-                        <?php echo esc_html__('Refresh tokens from Ax402', 'ax402-for-woocommerce'); ?>
+                        <?php echo esc_html__('Refresh tokens from Launa', 'ax402-for-woocommerce'); ?>
                     </button>
                 </p>
                 <p class="description" style="margin-top:0">
                     <?php echo esc_html__(
-                        'Tokens load from Ax402 /config/platform; USD rates load from /exchange-rates. Both refresh when you open this page (and when you change API base URL / API key and save). Stablecoins use 1:1; ZCHF, XGAS, and other market tokens need a live FX row.',
+                        'Tokens load from Launa /config/platform; USD rates load from /exchange-rates. Both refresh when you open this page (and when you change API base URL / API key and save). Stablecoins use 1:1; ZCHF, XGAS, and other market tokens need a live FX row.',
                         'ax402-for-woocommerce'
                     ); ?>
                 </p>
@@ -857,7 +857,7 @@ final class Ax402_WC_Gateway_Ax402 extends WC_Payment_Gateway
      * @param mixed $value
      * @return list<string>
      */
-    public function validate_ax402_tokens_field($key, $value): array
+    public function validate_launa_tokens_field($key, $value): array
     {
         if (!is_array($value)) {
             return [];
@@ -887,17 +887,17 @@ final class Ax402_WC_Gateway_Ax402 extends WC_Payment_Gateway
             $payload['enabled_token_ids'] = [];
         }
 
-        $platform_preview = Ax402_WC_Platform_Config_Store::platform();
-        $needs_hedera = Ax402_WC_Platform_Tokens::has_hedera_token_enabled(
+        $platform_preview = Launa_WC_Platform_Config_Store::platform();
+        $needs_hedera = Launa_WC_Platform_Tokens::has_hedera_token_enabled(
             $platform_preview,
             $payload['enabled_token_ids']
         );
-        $needs_evm = Ax402_WC_Settings_Readiness::needs_evm(
+        $needs_evm = Launa_WC_Settings_Readiness::needs_evm(
             $platform_preview,
             $payload['enabled_token_ids']
         );
 
-        $evm = Ax402_WC_Evm_Address::parse($payload['pay_to_address']);
+        $evm = Launa_WC_Evm_Address::parse($payload['pay_to_address']);
         if ($evm['ok'] && $evm['checksummed'] !== '') {
             $payload['pay_to_address'] = $evm['checksummed'];
             $this->update_option('pay_to_address', $evm['checksummed']);
@@ -907,7 +907,7 @@ final class Ax402_WC_Gateway_Ax402 extends WC_Payment_Gateway
             );
         }
 
-        $hedera_parsed = Ax402_WC_Settings::parse_hedera_account_id($payload['pay_to_hedera_account_id']);
+        $hedera_parsed = Launa_WC_Settings::parse_hedera_account_id($payload['pay_to_hedera_account_id']);
         if ($hedera_parsed['ok']) {
             $payload['pay_to_hedera_account_id'] = $hedera_parsed['value'];
             $this->update_option('pay_to_hedera_account_id', $hedera_parsed['value']);
@@ -933,7 +933,7 @@ final class Ax402_WC_Gateway_Ax402 extends WC_Payment_Gateway
             $this->update_option('api_key', '');
         }
 
-        Ax402_WC_Settings::update($payload);
+        Launa_WC_Settings::update($payload);
 
         $refresh_key = $this->get_field_key('refresh_platform_tokens');
         // phpcs:ignore WordPress.Security.NonceVerification.Missing -- WC settings form already verified.
@@ -942,22 +942,22 @@ final class Ax402_WC_Gateway_Ax402 extends WC_Payment_Gateway
 
         $should_refresh = $refresh_requested
             || $api_key_changed
-            || Ax402_WC_Platform_Config_Store::platform() === [];
+            || Launa_WC_Platform_Config_Store::platform() === [];
 
         if ($should_refresh) {
-            $sync = Ax402_WC_Platform_Config_Store::sync();
+            $sync = Launa_WC_Platform_Config_Store::sync();
             if (!$sync['ok'] && $sync['error'] !== '') {
                 WC_Admin_Settings::add_error(
                     sprintf(
                         /* translators: %s: error message */
-                        __('Ax402 token sync: %s', 'ax402-for-woocommerce'),
+                        __('Launa token sync: %s', 'ax402-for-woocommerce'),
                         $sync['error']
                     )
                 );
             } elseif ($sync['ok']) {
-                $platform = Ax402_WC_Platform_Config_Store::platform();
+                $platform = Launa_WC_Platform_Config_Store::platform();
                 $valid_ids = [];
-                foreach (Ax402_WC_Platform_Tokens::enabled_tokens($platform) as $token) {
+                foreach (Launa_WC_Platform_Tokens::enabled_tokens($platform) as $token) {
                     $id = (string) ($token['id'] ?? '');
                     if ($id !== '') {
                         $valid_ids[] = $id;
@@ -966,7 +966,7 @@ final class Ax402_WC_Gateway_Ax402 extends WC_Payment_Gateway
 
                 $selected = array_values(array_intersect($payload['enabled_token_ids'], $valid_ids));
                 if ($selected === [] && ($api_key_changed || $refresh_requested)) {
-                    $selected = Ax402_WC_Platform_Tokens::default_enabled_token_ids(
+                    $selected = Launa_WC_Platform_Tokens::default_enabled_token_ids(
                         $platform,
                         $payload['network_mode']
                     );
@@ -974,7 +974,7 @@ final class Ax402_WC_Gateway_Ax402 extends WC_Payment_Gateway
                 }
 
                 if ($selected !== $payload['enabled_token_ids']) {
-                    Ax402_WC_Settings::update(['enabled_token_ids' => $selected]);
+                    Launa_WC_Settings::update(['enabled_token_ids' => $selected]);
                     $this->update_option('settlement_tokens', $selected);
                 }
 
@@ -982,7 +982,7 @@ final class Ax402_WC_Gateway_Ax402 extends WC_Payment_Gateway
                     WC_Admin_Settings::add_message(
                         sprintf(
                             /* translators: %d: token count */
-                            __('Ax402 settlement tokens refreshed (%d available).', 'ax402-for-woocommerce'),
+                            __('Launa settlement tokens refreshed (%d available).', 'ax402-for-woocommerce'),
                             $sync['token_count']
                         )
                     );
@@ -991,20 +991,20 @@ final class Ax402_WC_Gateway_Ax402 extends WC_Payment_Gateway
         }
 
         try {
-            $settings_now = Ax402_WC_Settings::all();
-            $platform_now = Ax402_WC_Platform_Config_Store::platform();
-            $token_ids_now = Ax402_WC_Settings::enabled_token_ids($platform_now);
-            $needs_hedera = Ax402_WC_Platform_Tokens::has_hedera_token_enabled(
+            $settings_now = Launa_WC_Settings::all();
+            $platform_now = Launa_WC_Platform_Config_Store::platform();
+            $token_ids_now = Launa_WC_Settings::enabled_token_ids($platform_now);
+            $needs_hedera = Launa_WC_Platform_Tokens::has_hedera_token_enabled(
                 $platform_now,
                 $token_ids_now
             );
             $needs_evm = false;
             foreach ($token_ids_now as $token_id) {
-                $token = Ax402_WC_Platform_Tokens::find_token_by_id($platform_now, $token_id);
+                $token = Launa_WC_Platform_Tokens::find_token_by_id($platform_now, $token_id);
                 if ($token === null) {
                     continue;
                 }
-                if (!Ax402_WC_Platform_Tokens::is_hedera_network((string) ($token['network'] ?? ''))) {
+                if (!Launa_WC_Platform_Tokens::is_hedera_network((string) ($token['network'] ?? ''))) {
                     $needs_evm = true;
                     break;
                 }
@@ -1013,20 +1013,20 @@ final class Ax402_WC_Gateway_Ax402 extends WC_Payment_Gateway
                 $needs_evm = true;
             }
 
-            if (Ax402_WC_Settings::client() !== null) {
+            if (Launa_WC_Settings::client() !== null) {
                 $can_onboard = (!$needs_evm || $settings_now['pay_to_address'] !== '')
                     && (!$needs_hedera || $settings_now['pay_to_hedera_account_id'] !== '')
                     && ($needs_evm || $needs_hedera);
                 if ($can_onboard) {
-                    Ax402_WC_Store_Onboarding::ensure_api();
+                    Launa_WC_Store_Onboarding::ensure_api();
                     $this->sync_gateway_slug_from_plugin_settings(true);
                 }
-                $cors = Ax402_WC_Gateway_Cors::status();
+                $cors = Launa_WC_Gateway_Cors::status();
                 if ($cors['error'] !== '') {
                     WC_Admin_Settings::add_error(
                         sprintf(
                             /* translators: %s: error message */
-                            __('Ax402 CORS sync: %s', 'ax402-for-woocommerce'),
+                            __('Launa CORS sync: %s', 'ax402-for-woocommerce'),
                             $cors['error']
                         )
                     );
@@ -1036,7 +1036,7 @@ final class Ax402_WC_Gateway_Ax402 extends WC_Payment_Gateway
             WC_Admin_Settings::add_error(
                 sprintf(
                     /* translators: %s: error message */
-                    __('Ax402 onboarding warning: %s', 'ax402-for-woocommerce'),
+                    __('Launa onboarding warning: %s', 'ax402-for-woocommerce'),
                     $e->getMessage()
                 )
             );
@@ -1045,7 +1045,7 @@ final class Ax402_WC_Gateway_Ax402 extends WC_Payment_Gateway
 
     public function is_available(): bool
     {
-        return parent::is_available() && Ax402_WC_Settings_Readiness::is_ready();
+        return parent::is_available() && Launa_WC_Settings_Readiness::is_ready();
     }
 
     /**
@@ -1060,12 +1060,12 @@ final class Ax402_WC_Gateway_Ax402 extends WC_Payment_Gateway
         }
 
         try {
-            Ax402_WC_Order_Payment::prepare($order);
+            Launa_WC_Order_Payment::prepare($order);
         } catch (Throwable $e) {
             wc_add_notice(
                 sprintf(
                     /* translators: %s: error message */
-                    __('Ax402 payment setup failed: %s', 'ax402-for-woocommerce'),
+                    __('Launa payment setup failed: %s', 'ax402-for-woocommerce'),
                     $e->getMessage()
                 ),
                 'error'
@@ -1073,41 +1073,41 @@ final class Ax402_WC_Gateway_Ax402 extends WC_Payment_Gateway
             return ['result' => 'failure'];
         }
 
-        $order->update_status('pending', __('Awaiting Ax402 / x402 payment.', 'ax402-for-woocommerce'));
+        $order->update_status('pending', __('Awaiting Launa / x402 payment.', 'ax402-for-woocommerce'));
 
         WC()->cart?->empty_cart();
 
         return [
             'result' => 'success',
-            'redirect' => Ax402_WC_Order_Payment::pay_page_url($order),
+            'redirect' => Launa_WC_Order_Payment::pay_page_url($order),
         ];
     }
 
     private function render_readiness_card(): void
     {
-        $ready = Ax402_WC_Settings_Readiness::is_ready();
-        $items = Ax402_WC_Settings_Readiness::items();
+        $ready = Launa_WC_Settings_Readiness::is_ready();
+        $items = Launa_WC_Settings_Readiness::items();
         $enabled = $this->get_option('enabled', 'no') === 'yes';
         $class = $ready ? 'is-ready' : 'is-not-ready';
         ?>
-        <div class="ax402-readiness <?php echo esc_attr($class); ?>">
-            <p class="ax402-readiness__title">
+        <div class="launa-readiness <?php echo esc_attr($class); ?>">
+            <p class="launa-readiness__title">
                 <?php
                 echo $ready
-                    ? esc_html__('Ax402 is ready', 'ax402-for-woocommerce')
-                    : esc_html__('Ax402 is not ready', 'ax402-for-woocommerce');
+                    ? esc_html__('Launa is ready', 'ax402-for-woocommerce')
+                    : esc_html__('Launa is not ready', 'ax402-for-woocommerce');
                 ?>
             </p>
             <?php if ($ready && !$enabled) : ?>
-                <p class="ax402-readiness__note">
-                    <?php echo esc_html__('Turn on Enable Ax402 payments below to offer it at checkout.', 'ax402-for-woocommerce'); ?>
+                <p class="launa-readiness__note">
+                    <?php echo esc_html__('Turn on Enable Launa payments below to offer it at checkout.', 'ax402-for-woocommerce'); ?>
                 </p>
             <?php elseif (!$ready) : ?>
-                <p class="ax402-readiness__note">
-                    <?php echo esc_html__('Finish the items below so this store can accept Ax402 payments.', 'ax402-for-woocommerce'); ?>
+                <p class="launa-readiness__note">
+                    <?php echo esc_html__('Finish the items below so this store can accept Launa payments.', 'ax402-for-woocommerce'); ?>
                 </p>
             <?php endif; ?>
-            <ul class="ax402-readiness__list">
+            <ul class="launa-readiness__list">
                 <?php foreach ($items as $item) :
                     $ok = (bool) $item['ok'];
                     ?>
@@ -1116,7 +1116,7 @@ final class Ax402_WC_Gateway_Ax402 extends WC_Payment_Gateway
                         <span>
                             <?php echo esc_html((string) $item['label']); ?>
                             <?php if (!$ok && (string) $item['fix'] !== '') : ?>
-                                <span class="ax402-readiness__fix">
+                                <span class="launa-readiness__fix">
                                     <?php echo $this->readiness_fix_html($item); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- kses'd HTML. ?>
                                 </span>
                             <?php endif; ?>
@@ -1144,7 +1144,7 @@ final class Ax402_WC_Gateway_Ax402 extends WC_Payment_Gateway
         }
         if ($item['id'] === 'api_key') {
             return $this->admin_field_description_html(
-                '<a href="#woocommerce_ax402_api_key">' . esc_html($fix) . '</a>'
+                '<a href="#woocommerce_launa_api_key">' . esc_html($fix) . '</a>'
             );
         }
 
@@ -1152,12 +1152,12 @@ final class Ax402_WC_Gateway_Ax402 extends WC_Payment_Gateway
     }
 
     /**
-     * WC stores slug on the gateway option; onboarding writes ax402_wc_settings.
+     * WC stores slug on the gateway option; onboarding writes launa_wc_settings.
      * Keep the Advanced field in sync so a blank form does not look like a missing slug.
      */
     private function sync_gateway_slug_from_plugin_settings(bool $persist = false): void
     {
-        $slug = Ax402_WC_Settings::all()['api_slug'];
+        $slug = Launa_WC_Settings::all()['api_slug'];
         if ($slug === '') {
             return;
         }
@@ -1173,7 +1173,7 @@ final class Ax402_WC_Gateway_Ax402 extends WC_Payment_Gateway
             return true;
         }
 
-        $current = Ax402_WC_Settings::all()['api_key'];
+        $current = Launa_WC_Settings::all()['api_key'];
         return $current !== '' && $submitted === str_repeat('*', strlen($current));
     }
 

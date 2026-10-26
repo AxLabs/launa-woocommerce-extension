@@ -6,8 +6,9 @@ defined('ABSPATH') || exit;
 /**
  * Encrypt secrets at rest using WordPress salts.
  */
-final class Ax402_WC_Crypto
+final class Launa_WC_Crypto
 {
+    // Prefix and fallback salt stay ax402 so ciphertext written before the Launa rename still decrypts.
     private const PREFIX = 'ax402v1:';
 
     public static function encrypt(string $plaintext): string

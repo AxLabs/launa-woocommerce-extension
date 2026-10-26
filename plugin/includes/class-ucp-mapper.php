@@ -6,11 +6,11 @@ defined('ABSPATH') || exit;
 /**
  * WC_Order → UCP checkout session JSON (no gateway fields).
  */
-final class Ax402_WC_Ucp_Mapper
+final class Launa_WC_Ucp_Mapper
 {
-    public const META_UCP = '_ax402_ucp_session';
-    public const META_PREPARED_TOTAL = '_ax402_ucp_prepared_total';
-    public const META_AGENT = '_ax402_ucp_agent';
+    public const META_UCP = '_launa_ucp_session';
+    public const META_PREPARED_TOTAL = '_launa_ucp_prepared_total';
+    public const META_AGENT = '_launa_ucp_agent';
 
     /**
      * @param list<array<string, string>> $extra_messages
@@ -22,16 +22,16 @@ final class Ax402_WC_Ucp_Mapper
         $status = $computed['status'];
         $messages = array_merge($computed['messages'], $extra_messages);
 
-        $ucp = Ax402_WC_Ucp_Response::ucp(
+        $ucp = Launa_WC_Ucp_Response::ucp(
             'dev.ucp.shopping.checkout',
-            ['payment_handlers' => Ax402_WC_Ucp_Response::session_payment_handlers()]
+            ['payment_handlers' => Launa_WC_Ucp_Response::session_payment_handlers()]
         );
 
         $payload = [
             'ucp' => $ucp,
             'id' => $order->get_order_key(),
             'status' => $status,
-            'currency' => Ax402_WC_Ucp_Money::CURRENCY,
+            'currency' => Launa_WC_Ucp_Money::CURRENCY,
             'line_items' => self::line_items($order),
             'totals' => self::totals($order),
             'links' => self::links($order, $status),
@@ -42,13 +42,13 @@ final class Ax402_WC_Ucp_Mapper
             $payload['buyer'] = $buyer;
         }
 
-        $fulfillment = Ax402_WC_Ucp_Fulfillment::map_for_session($order);
+        $fulfillment = Launa_WC_Ucp_Fulfillment::map_for_session($order);
         if ($fulfillment !== null) {
             $payload['fulfillment'] = $fulfillment;
         }
 
-        if ($status === Ax402_WC_Ucp_Status::READY) {
-            $messages[] = Ax402_WC_Ucp_Response::payment_required_message(
+        if ($status === Launa_WC_Ucp_Status::READY) {
+            $messages[] = Launa_WC_Ucp_Response::payment_required_message(
                 $order->get_order_key(),
                 'info'
             );
@@ -63,17 +63,17 @@ final class Ax402_WC_Ucp_Mapper
             $payload['expires_at'] = gmdate('c', $created->getTimestamp() + 6 * 3600);
         }
 
-        if ($status === Ax402_WC_Ucp_Status::COMPLETED && $order->is_paid()) {
+        if ($status === Launa_WC_Ucp_Status::COMPLETED && $order->is_paid()) {
             $payload['order'] = [
                 'id' => (string) $order->get_id(),
                 'permalink_url' => $order->get_checkout_order_received_url(),
             ];
             $payload['payment'] = self::payment_after_settle($order);
-        } elseif ($status === Ax402_WC_Ucp_Status::READY) {
-            $options = Ax402_WC_Order_Payment::settlement_options_from_order($order);
-            $instruments = Ax402_WC_Ucp_Asset_Match::checkout_instruments(
+        } elseif ($status === Launa_WC_Ucp_Status::READY) {
+            $options = Launa_WC_Order_Payment::settlement_options_from_order($order);
+            $instruments = Launa_WC_Ucp_Asset_Match::checkout_instruments(
                 $options,
-                Ax402_WC_Order_Payment::preferred_option_from_order($order, $options)
+                Launa_WC_Order_Payment::preferred_option_from_order($order, $options)
             );
             if ($instruments !== []) {
                 $payload['payment'] = ['instruments' => $instruments];
@@ -85,19 +85,19 @@ final class Ax402_WC_Ucp_Mapper
             $payload['quote'] = $quote;
         }
 
-        if ($status !== Ax402_WC_Ucp_Status::COMPLETED && $status !== Ax402_WC_Ucp_Status::CANCELED) {
-            $continue = Ax402_WC_Ucp_Response::continue_url();
+        if ($status !== Launa_WC_Ucp_Status::COMPLETED && $status !== Launa_WC_Ucp_Status::CANCELED) {
+            $continue = Launa_WC_Ucp_Response::continue_url();
             if ($continue !== '') {
                 $payload['continue_url'] = $continue;
             }
         }
 
-        $actions = Ax402_WC_Ucp_Response::payment_challenge_actions($status);
+        $actions = Launa_WC_Ucp_Response::payment_challenge_actions($status);
         if ($actions !== []) {
             $payload['actions'] = $actions;
         }
 
-        Ax402_WC_Ucp_Leak::assert_clean($payload, Ax402_WC_Settings::all());
+        Launa_WC_Ucp_Leak::assert_clean($payload, Launa_WC_Settings::all());
 
         return $payload;
     }
@@ -108,16 +108,16 @@ final class Ax402_WC_Ucp_Mapper
     public static function status_for_order(WC_Order $order): array
     {
         if ($order->is_paid()) {
-            return Ax402_WC_Ucp_Status::compute(true, false, false, false, false, false, true, true);
+            return Launa_WC_Ucp_Status::compute(true, false, false, false, false, false, true, true);
         }
         if ($order->has_status(['cancelled', 'canceled', 'refunded', 'failed'])) {
-            return Ax402_WC_Ucp_Status::compute(false, true, false, false, false, false, true, true);
+            return Launa_WC_Ucp_Status::compute(false, true, false, false, false, false, true, true);
         }
 
-        $needs = Ax402_WC_Ucp_Fulfillment::order_needs_shipping($order);
-        $has_dest = Ax402_WC_Ucp_Fulfillment::has_destination($order);
+        $needs = Launa_WC_Ucp_Fulfillment::order_needs_shipping($order);
+        $has_dest = Launa_WC_Ucp_Fulfillment::has_destination($order);
         $rates = $needs && $has_dest
-            ? Ax402_WC_Ucp_Fulfillment::calculate_rates($order)
+            ? Launa_WC_Ucp_Fulfillment::calculate_rates($order)
             : [];
 
         $has_items = false;
@@ -137,8 +137,8 @@ final class Ax402_WC_Ucp_Mapper
 
         if (!$has_items) {
             return [
-                'status' => Ax402_WC_Ucp_Status::INCOMPLETE,
-                'messages' => [Ax402_WC_Ucp_Response::message(
+                'status' => Launa_WC_Ucp_Status::INCOMPLETE,
+                'messages' => [Launa_WC_Ucp_Response::message(
                     'error',
                     'invalid',
                     'At least one line item is required.',
@@ -148,12 +148,12 @@ final class Ax402_WC_Ucp_Mapper
             ];
         }
 
-        return Ax402_WC_Ucp_Status::compute(
+        return Launa_WC_Ucp_Status::compute(
             false,
             false,
             $needs,
             $has_dest,
-            Ax402_WC_Ucp_Fulfillment::has_shipping_selection($order),
+            Launa_WC_Ucp_Fulfillment::has_shipping_selection($order),
             $rates !== [],
             $total > 0,
             $in_stock
@@ -170,8 +170,8 @@ final class Ax402_WC_Ucp_Mapper
             if (!$item instanceof WC_Order_Item_Product) {
                 continue;
             }
-            $unit = Ax402_WC_Ucp_Money::usd_to_cents_exact((string) $item->get_subtotal())
-                ?? Ax402_WC_Ucp_Money::usd_to_cents_ceil((string) $item->get_subtotal());
+            $unit = Launa_WC_Ucp_Money::usd_to_cents_exact((string) $item->get_subtotal())
+                ?? Launa_WC_Ucp_Money::usd_to_cents_ceil((string) $item->get_subtotal());
             $qty = max(1, $item->get_quantity());
             $unit_price = $unit !== null ? (int) round($unit / $qty) : 0;
             $line_total = $unit ?? 0;
@@ -203,10 +203,10 @@ final class Ax402_WC_Ucp_Mapper
      */
     public static function totals(WC_Order $order): array
     {
-        $subtotal = Ax402_WC_Ucp_Money::usd_to_cents_ceil((string) $order->get_subtotal()) ?? 0;
-        $shipping = Ax402_WC_Ucp_Money::usd_to_cents_ceil((string) $order->get_shipping_total()) ?? 0;
-        $tax = Ax402_WC_Ucp_Money::usd_to_cents_ceil((string) $order->get_total_tax()) ?? 0;
-        $total = Ax402_WC_Ucp_Money::usd_to_cents_ceil((string) $order->get_total()) ?? 0;
+        $subtotal = Launa_WC_Ucp_Money::usd_to_cents_ceil((string) $order->get_subtotal()) ?? 0;
+        $shipping = Launa_WC_Ucp_Money::usd_to_cents_ceil((string) $order->get_shipping_total()) ?? 0;
+        $tax = Launa_WC_Ucp_Money::usd_to_cents_ceil((string) $order->get_total_tax()) ?? 0;
+        $total = Launa_WC_Ucp_Money::usd_to_cents_ceil((string) $order->get_total()) ?? 0;
 
         $rows = [
             ['type' => 'subtotal', 'amount' => $subtotal],
@@ -239,8 +239,8 @@ final class Ax402_WC_Ucp_Mapper
                 }
             }
         }
-        if ($order instanceof WC_Order && $status === Ax402_WC_Ucp_Status::READY) {
-            $links[] = Ax402_WC_Ucp_Response::payment_complete_link($order->get_order_key());
+        if ($order instanceof WC_Order && $status === Launa_WC_Ucp_Status::READY) {
+            $links[] = Launa_WC_Ucp_Response::payment_complete_link($order->get_order_key());
         }
 
         return $links;
@@ -273,8 +273,8 @@ final class Ax402_WC_Ucp_Mapper
      */
     public static function quote(WC_Order $order): ?array
     {
-        $options = Ax402_WC_Order_Payment::settlement_options_from_order($order);
-        $selected = (string) $order->get_meta(Ax402_WC_Order_Payment::META_SELECTED_TOKEN_ID);
+        $options = Launa_WC_Order_Payment::settlement_options_from_order($order);
+        $selected = (string) $order->get_meta(Launa_WC_Order_Payment::META_SELECTED_TOKEN_ID);
         $candidate = null;
         foreach ($options as $option) {
             $source = (string) ($option['rateSource'] ?? '');
@@ -282,7 +282,7 @@ final class Ax402_WC_Ucp_Mapper
             if ($source === 'stablecoin-1to1' || $rate === '1') {
                 continue;
             }
-            if ($selected !== '' && Ax402_WC_Ucp_Asset_Match::same_token_id((string) ($option['tokenId'] ?? ''), $selected)) {
+            if ($selected !== '' && Launa_WC_Ucp_Asset_Match::same_token_id((string) ($option['tokenId'] ?? ''), $selected)) {
                 $candidate = $option;
                 break;
             }
@@ -303,7 +303,7 @@ final class Ax402_WC_Ucp_Mapper
             'base' => 'USD',
             'target' => (string) ($candidate['symbol'] ?? ''),
             'captured_at' => $captured,
-            'source' => (string) ($candidate['rateSource'] ?? 'ax402-control-plane'),
+            'source' => (string) ($candidate['rateSource'] ?? 'launa-control-plane'),
         ];
     }
 
@@ -312,14 +312,14 @@ final class Ax402_WC_Ucp_Mapper
      */
     public static function payment_after_settle(WC_Order $order): array
     {
-        $network = (string) $order->get_meta(Ax402_WC_Order_Payment::META_NETWORK);
-        $options = Ax402_WC_Order_Payment::settlement_options_from_order($order);
-        $selected = (string) $order->get_meta(Ax402_WC_Order_Payment::META_SELECTED_TOKEN_ID);
+        $network = (string) $order->get_meta(Launa_WC_Order_Payment::META_NETWORK);
+        $options = Launa_WC_Order_Payment::settlement_options_from_order($order);
+        $selected = (string) $order->get_meta(Launa_WC_Order_Payment::META_SELECTED_TOKEN_ID);
         $symbol = 'TOKEN';
         $asset = '';
         $token_id = $selected !== '' ? $selected : 'instr_x402_1';
         foreach ($options as $option) {
-            if ($selected !== '' && Ax402_WC_Ucp_Asset_Match::same_token_id((string) ($option['tokenId'] ?? ''), $selected)) {
+            if ($selected !== '' && Launa_WC_Ucp_Asset_Match::same_token_id((string) ($option['tokenId'] ?? ''), $selected)) {
                 $symbol = (string) ($option['symbol'] ?? $symbol);
                 $network = (string) ($option['network'] ?? $network);
                 $asset = (string) ($option['asset'] ?? '');

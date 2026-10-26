@@ -38,8 +38,8 @@ main, n1 = re.subn(
     count=1,
 )
 main, n2 = re.subn(
-    r"define\('AX402_WC_VERSION',\s*'[^']*'\)",
-    f"define('AX402_WC_VERSION', '{version}')",
+    r"define\('LAUNA_WC_VERSION',\s*'[^']*'\)",
+    f"define('LAUNA_WC_VERSION', '{version}')",
     main,
     count=1,
 )
@@ -60,7 +60,7 @@ if n3 != 1:
 # Pointer only — full notes live on the GitHub Release (see RELEASE.md).
 changelog_heading = f"= {version} ="
 release_url = (
-    "https://github.com/AxLabs/ax402-woocommerce-extension/releases/tag/v"
+    "https://github.com/AxLabs/launa-woocommerce-extension/releases/tag/v"
     + version
 )
 stub = f"{changelog_heading}\n[GitHub release v{version}]({release_url})\n\n"

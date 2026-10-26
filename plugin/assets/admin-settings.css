@@ -1,4 +1,4 @@
-.ax402-readiness {
+.launa-readiness {
 	margin: 12px 0 20px;
 	padding: 16px 18px;
 	max-width: 52rem;
@@ -9,34 +9,34 @@
 	box-sizing: border-box;
 }
 
-.ax402-readiness.is-ready {
+.launa-readiness.is-ready {
 	border-left-color: #00a32a;
 }
 
-.ax402-readiness.is-not-ready {
+.launa-readiness.is-not-ready {
 	border-left-color: #d63638;
 }
 
-.ax402-readiness__title {
+.launa-readiness__title {
 	margin: 0 0 6px;
 	font-size: 14px;
 	font-weight: 600;
 	line-height: 1.4;
 }
 
-.ax402-readiness__note,
-.ax402-readiness__fix {
+.launa-readiness__note,
+.launa-readiness__fix {
 	margin: 0 0 8px;
 	color: #50575e;
 }
 
-.ax402-readiness__list {
+.launa-readiness__list {
 	margin: 10px 0 0;
 	padding: 0;
 	list-style: none;
 }
 
-.ax402-readiness__list li {
+.launa-readiness__list li {
 	display: flex;
 	gap: 8px;
 	align-items: flex-start;
@@ -44,39 +44,39 @@
 	line-height: 1.45;
 }
 
-.ax402-readiness__list .dashicons {
+.launa-readiness__list .dashicons {
 	width: 18px;
 	height: 18px;
 	font-size: 18px;
 	margin-top: 1px;
 }
 
-.ax402-readiness__list .is-ok .dashicons {
+.launa-readiness__list .is-ok .dashicons {
 	color: #00a32a;
 }
 
-.ax402-readiness__list .is-fail .dashicons {
+.launa-readiness__list .is-fail .dashicons {
 	color: #d63638;
 }
 
-.ax402-readiness__list .is-fail .ax402-readiness__fix {
+.launa-readiness__list .is-fail .launa-readiness__fix {
 	display: block;
 	margin: 2px 0 0;
 	font-size: 12px;
 }
 
-.ax402-recent-payments {
+.launa-recent-payments {
 	max-width: 52rem;
 }
 
-.ax402-recent-payments table {
+.launa-recent-payments table {
 	width: 100%;
 	border-collapse: collapse;
 	background: #fff;
 }
 
-.ax402-recent-payments th,
-.ax402-recent-payments td {
+.launa-recent-payments th,
+.launa-recent-payments td {
 	padding: 8px 10px;
 	text-align: left;
 	border-bottom: 1px solid #dcdcde;
@@ -84,37 +84,37 @@
 	vertical-align: middle;
 }
 
-.ax402-recent-payments th {
+.launa-recent-payments th {
 	font-weight: 600;
 }
 
-.ax402-recent-payments__empty {
+.launa-recent-payments__empty {
 	margin: 0 0 8px;
 	color: #50575e;
 }
 
-.ax402-recent-payments__income {
+.launa-recent-payments__income {
 	margin: 10px 0 0;
 }
 
-.ax402-recent-payments__when {
+.launa-recent-payments__when {
 	white-space: nowrap;
 }
 
-.ax402-recent-payments__when-tz {
+.launa-recent-payments__when-tz {
 	margin-left: 0.35em;
 	color: #50575e;
 	font-weight: 500;
 }
 
-.ax402-recent-payments__tx {
+.launa-recent-payments__tx {
 	display: flex;
 	align-items: center;
 	gap: 6px;
 	flex-wrap: wrap;
 }
 
-.ax402-copy-tx {
+.launa-copy-tx {
 	display: inline-flex;
 	align-items: center;
 	justify-content: center;
@@ -127,34 +127,34 @@
 	line-height: 1;
 }
 
-.ax402-copy-tx .dashicons {
+.launa-copy-tx .dashicons {
 	width: 16px;
 	height: 16px;
 	font-size: 16px;
 }
 
-.ax402-copy-tx:hover,
-.ax402-copy-tx:focus {
+.launa-copy-tx:hover,
+.launa-copy-tx:focus {
 	color: #135e96;
 }
 
-.ax402-copy-tx.is-copied {
+.launa-copy-tx.is-copied {
 	color: #00a32a;
 }
 
-.ax402-copy-tx.is-copied .dashicons-admin-page {
+.launa-copy-tx.is-copied .dashicons-admin-page {
 	display: none;
 }
 
-.ax402-copy-tx .dashicons-yes {
+.launa-copy-tx .dashicons-yes {
 	display: none;
 }
 
-.ax402-copy-tx.is-copied .dashicons-yes {
+.launa-copy-tx.is-copied .dashicons-yes {
 	display: block;
 }
 
-.ax402-recent-payments__more td {
+.launa-recent-payments__more td {
 	color: #50575e;
 	letter-spacing: 0.18em;
 	border-bottom: 0;
@@ -169,7 +169,7 @@
 	line-height: 1.3;
 }
 
-.ax402-advanced-heading .ax402-advanced-toggle {
+.launa-advanced-heading .launa-advanced-toggle {
 	margin-left: 10px;
 	font-size: 13px;
 	font-weight: 400;
@@ -177,7 +177,7 @@
 	text-decoration: none;
 }
 
-.ax402-advanced-heading .ax402-advanced-toggle:focus {
+.launa-advanced-heading .launa-advanced-toggle:focus {
 	box-shadow: none;
 	outline: 1px solid #2271b1;
 	outline-offset: 2px;

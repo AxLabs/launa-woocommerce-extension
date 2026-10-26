@@ -15,7 +15,7 @@ defined('ABSPATH') || exit;
  * again with no signature). This helper still reads those fields so a signature
  * on complete is treated as reconcile, never forwarded to the gateway.
  */
-final class Ax402_WC_Ucp_Mcp_Payment
+final class Launa_WC_Ucp_Mcp_Payment
 {
     public const META_PAYMENT = 'x402/payment';
     public const META_PAYMENT_DATA = 'x402/payment-data';

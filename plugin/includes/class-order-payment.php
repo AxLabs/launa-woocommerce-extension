@@ -4,28 +4,28 @@ declare(strict_types=1);
 defined('ABSPATH') || exit;
 
 /**
- * Creates / updates the per-order Ax402 payment endpoint.
+ * Creates / updates the per-order Launa payment endpoint.
  *
  * One temporary endpoint holds every priced settlement token in accepts[].
  */
-final class Ax402_WC_Order_Payment
+final class Launa_WC_Order_Payment
 {
-    public const META_GATEWAY_URL = '_ax402_gateway_url';
-    public const META_ENDPOINT_ID = '_ax402_endpoint_id';
-    public const META_FULFILL_TOKEN = '_ax402_fulfill_token';
-    public const META_AMOUNT_USDC = '_ax402_amount_usdc';
-    public const META_AMOUNT_USD = '_ax402_amount_usd';
-    public const META_AMOUNT_ATOMIC = '_ax402_amount_atomic';
-    public const META_NETWORK = '_ax402_network';
-    public const META_PATH = '_ax402_path_pattern';
-    public const META_SETTLEMENT_OPTIONS = '_ax402_settlement_options';
-    public const META_SELECTED_TOKEN_ID = '_ax402_selected_token_id';
+    public const META_GATEWAY_URL = '_launa_gateway_url';
+    public const META_ENDPOINT_ID = '_launa_endpoint_id';
+    public const META_FULFILL_TOKEN = '_launa_fulfill_token';
+    public const META_AMOUNT_USDC = '_launa_amount_usdc';
+    public const META_AMOUNT_USD = '_launa_amount_usd';
+    public const META_AMOUNT_ATOMIC = '_launa_amount_atomic';
+    public const META_NETWORK = '_launa_network';
+    public const META_PATH = '_launa_path_pattern';
+    public const META_SETTLEMENT_OPTIONS = '_launa_settlement_options';
+    public const META_SELECTED_TOKEN_ID = '_launa_selected_token_id';
 
     /** Control-plane TTL for ephemeral order endpoints (seconds). */
     public const ENDPOINT_TTL_SECONDS = 21600;
 
     /**
-     * Prepare Ax402 payment for a WooCommerce order.
+     * Prepare Launa payment for a WooCommerce order.
      *
      * @return array{
      *   gateway_url:string,
@@ -38,16 +38,16 @@ final class Ax402_WC_Order_Payment
      *   settlement_options:list<array<string,mixed>>
      * }
      */
-    public static function prepare(WC_Order $order, ?Ax402_WC_Control_Plane_Client $client = null): array
+    public static function prepare(WC_Order $order, ?Launa_WC_Control_Plane_Client $client = null): array
     {
         if (get_woocommerce_currency() !== 'USD') {
-            throw new RuntimeException('Ax402 v0 requires store currency USD');
+            throw new RuntimeException('Launa v0 requires store currency USD');
         }
 
-        $settings = Ax402_WC_Settings::all();
-        $client ??= Ax402_WC_Settings::client();
+        $settings = Launa_WC_Settings::all();
+        $client ??= Launa_WC_Settings::client();
         if ($client === null) {
-            throw new RuntimeException('Ax402 is not configured');
+            throw new RuntimeException('Launa is not configured');
         }
 
         $platform = $client->get_platform_config();
@@ -55,13 +55,13 @@ final class Ax402_WC_Order_Payment
         try {
             $supported = $client->get_supported_networks();
         } catch (Throwable $e) {
-            $supported = Ax402_WC_Platform_Config_Store::get()['supported_networks'];
+            $supported = Launa_WC_Platform_Config_Store::get()['supported_networks'];
         }
-        Ax402_WC_Platform_Config_Store::store($platform, '', is_array($supported) ? $supported : null);
+        Launa_WC_Platform_Config_Store::store($platform, '', is_array($supported) ? $supported : null);
 
-        $amount_usd = Ax402_WC_Money::normalize_order_total($order->get_total());
-        $token_ids = Ax402_WC_Settings::enabled_token_ids($platform);
-        $options = Ax402_WC_Platform_Tokens::build_settlement_options(
+        $amount_usd = Launa_WC_Money::normalize_order_total($order->get_total());
+        $token_ids = Launa_WC_Settings::enabled_token_ids($platform);
+        $options = Launa_WC_Platform_Tokens::build_settlement_options(
             $platform,
             $token_ids,
             $amount_usd,
@@ -70,16 +70,16 @@ final class Ax402_WC_Order_Payment
 
         if ($options === []) {
             throw new RuntimeException(
-                'No settlement tokens available with a resolvable USD rate. Enable tokens in Ax402 settings.'
+                'No settlement tokens available with a resolvable USD rate. Enable tokens in Launa settings.'
             );
         }
 
         foreach ($options as $option) {
             $network = (string) $option['network'];
-            $pay_to = Ax402_WC_Settings::pay_to_for_network($network);
+            $pay_to = Launa_WC_Settings::pay_to_for_network($network);
             if ($pay_to === '') {
                 throw new RuntimeException(
-                    Ax402_WC_Platform_Tokens::is_hedera_network($network)
+                    Launa_WC_Platform_Tokens::is_hedera_network($network)
                         ? 'Hedera pay-to account id is required for Hedera settlement tokens.'
                         : 'EVM pay-to wallet address is required for EVM settlement tokens.'
                 );
@@ -94,8 +94,8 @@ final class Ax402_WC_Order_Payment
         }
 
         $order_key = $order->get_order_key();
-        $onboarded = Ax402_WC_Store_Onboarding::ensure_api($client);
-        $upstream_auth = Ax402_WC_Control_Plane_Client::upstream_auth_for_base_url(
+        $onboarded = Launa_WC_Store_Onboarding::ensure_api($client);
+        $upstream_auth = Launa_WC_Control_Plane_Client::upstream_auth_for_base_url(
             (string) ($onboarded['api']['upstream_base_url'] ?? home_url())
         );
         $path = self::fulfill_path($order_key, $fulfill_token);
@@ -121,7 +121,7 @@ final class Ax402_WC_Order_Payment
             self::ENDPOINT_TTL_SECONDS
         );
         $endpoint_id = (string) ($endpoint['id'] ?? '');
-        $gateway_url = Ax402_WC_Platform_Tokens::gateway_url(
+        $gateway_url = Launa_WC_Platform_Tokens::gateway_url(
             $onboarded['gateway_host'],
             $path,
             $platform
@@ -161,7 +161,7 @@ final class Ax402_WC_Order_Payment
         $order->delete_meta_data(self::META_SELECTED_TOKEN_ID);
         if ($previous !== '') {
             foreach ($display_options as $option) {
-                if (Ax402_WC_Ucp_Asset_Match::same_token_id((string) ($option['tokenId'] ?? ''), $previous)) {
+                if (Launa_WC_Ucp_Asset_Match::same_token_id((string) ($option['tokenId'] ?? ''), $previous)) {
                     $order->update_meta_data(self::META_SELECTED_TOKEN_ID, (string) $option['tokenId']);
                     break;
                 }
@@ -187,7 +187,7 @@ final class Ax402_WC_Order_Payment
             if ($prepared) {
                 continue;
             }
-            $token = Ax402_WC_Platform_Tokens::find_token_by_id($platform, $token_id);
+            $token = Launa_WC_Platform_Tokens::find_token_by_id($platform, $token_id);
             $omitted_symbols[] = $token !== null
                 ? (string) ($token['symbol'] ?? $token_id)
                 : $token_id;
@@ -195,7 +195,7 @@ final class Ax402_WC_Order_Payment
 
         $note = sprintf(
             /* translators: 1: USD amount 2: token symbols 3: accept count */
-            __('Ax402 payment prepared for %1$s USD (%2$s) on 1 temporary endpoint (%3$d accept(s)).', 'ax402-for-woocommerce'),
+            __('Launa payment prepared for %1$s USD (%2$s) on 1 temporary endpoint (%3$d accept(s)).', 'ax402-for-woocommerce'),
             $amount_usd,
             $symbols,
             count($display_options)
@@ -226,14 +226,14 @@ final class Ax402_WC_Order_Payment
      */
     public static function ensure_current_settlement_options(
         WC_Order $order,
-        ?Ax402_WC_Control_Plane_Client $client = null
+        ?Launa_WC_Control_Plane_Client $client = null
     ): void {
         if ($order->is_paid()) {
             return;
         }
 
-        $settings = Ax402_WC_Settings::all();
-        $client ??= Ax402_WC_Settings::client();
+        $settings = Launa_WC_Settings::all();
+        $client ??= Launa_WC_Settings::client();
         if ($client === null) {
             return;
         }
@@ -244,20 +244,20 @@ final class Ax402_WC_Order_Payment
             try {
                 $supported = $client->get_supported_networks();
             } catch (Throwable $e) {
-                $supported = Ax402_WC_Platform_Config_Store::get()['supported_networks'];
+                $supported = Launa_WC_Platform_Config_Store::get()['supported_networks'];
             }
-            Ax402_WC_Platform_Config_Store::store($platform, '', is_array($supported) ? $supported : null);
+            Launa_WC_Platform_Config_Store::store($platform, '', is_array($supported) ? $supported : null);
         } catch (Throwable $e) {
-            $platform = Ax402_WC_Platform_Config_Store::platform_or_sync();
+            $platform = Launa_WC_Platform_Config_Store::platform_or_sync();
         }
 
         if ($platform === []) {
             return;
         }
 
-        $token_ids = Ax402_WC_Settings::enabled_token_ids($platform);
-        $amount_usd = Ax402_WC_Money::normalize_order_total($order->get_total());
-        $live = Ax402_WC_Platform_Tokens::build_settlement_options(
+        $token_ids = Launa_WC_Settings::enabled_token_ids($platform);
+        $amount_usd = Launa_WC_Money::normalize_order_total($order->get_total());
+        $live = Launa_WC_Platform_Tokens::build_settlement_options(
             $platform,
             $token_ids,
             $amount_usd,
@@ -297,13 +297,13 @@ final class Ax402_WC_Order_Payment
     public static function lock_settlement_token(
         WC_Order $order,
         string $token_id,
-        ?Ax402_WC_Control_Plane_Client $client = null
+        ?Launa_WC_Control_Plane_Client $client = null
     ): array {
         if ($order->is_paid()) {
             throw new RuntimeException('Order is already paid');
         }
 
-        if (!Ax402_WC_Fulfill_Auth::can_fulfill_status($order->get_status())) {
+        if (!Launa_WC_Fulfill_Auth::can_fulfill_status($order->get_status())) {
             throw new RuntimeException(esc_html('Order cannot accept payment in status ' . $order->get_status()));
         }
 
@@ -312,9 +312,9 @@ final class Ax402_WC_Order_Payment
             throw new InvalidArgumentException('tokenId is required');
         }
 
-        $client ??= Ax402_WC_Settings::client();
+        $client ??= Launa_WC_Settings::client();
         if ($client === null) {
-            throw new RuntimeException('Ax402 is not configured');
+            throw new RuntimeException('Launa is not configured');
         }
 
         $options = self::settlement_options_from_order($order);
@@ -434,7 +434,7 @@ final class Ax402_WC_Order_Payment
             return null;
         }
         foreach ($options as $option) {
-            if (Ax402_WC_Ucp_Asset_Match::same_token_id((string) ($option['tokenId'] ?? ''), $stored)) {
+            if (Launa_WC_Ucp_Asset_Match::same_token_id((string) ($option['tokenId'] ?? ''), $stored)) {
                 return $option;
             }
         }
@@ -531,8 +531,8 @@ final class Ax402_WC_Order_Payment
             'rpcUrl' => (string) $option['rpc_url'],
             'blockExplorerUrl' => (string) ($option['explorer_url'] ?? ''),
             'isNative' => !empty($option['is_hedera'])
-                ? Ax402_WC_Platform_Tokens::is_hedera_native_asset((string) $option['asset'])
-                : Ax402_WC_Platform_Tokens::is_native_asset((string) $option['asset']),
+                ? Launa_WC_Platform_Tokens::is_hedera_native_asset((string) $option['asset'])
+                : Launa_WC_Platform_Tokens::is_native_asset((string) $option['asset']),
             'isHedera' => !empty($option['is_hedera']),
             'apiId' => $endpoint['apiId'],
             'endpointId' => $endpoint['endpointId'],
@@ -561,7 +561,7 @@ final class Ax402_WC_Order_Payment
         string $fulfill_token,
         string $token_slug = ''
     ): string {
-        $base = '/wp-json/ax402/v1/fulfill/'
+        $base = '/wp-json/launa/v1/fulfill/'
             . rawurlencode($order_key)
             . '/'
             . rawurlencode($fulfill_token);
@@ -576,7 +576,7 @@ final class Ax402_WC_Order_Payment
     {
         return add_query_arg(
             [
-                'ax402_pay' => '1',
+                'launa_pay' => '1',
                 'key' => $order->get_order_key(),
             ],
             wc_get_checkout_url()
@@ -585,7 +585,7 @@ final class Ax402_WC_Order_Payment
 
     public static function delete_endpoint_for_order(
         WC_Order $order,
-        ?Ax402_WC_Control_Plane_Client $client = null
+        ?Launa_WC_Control_Plane_Client $client = null
     ): void {
         self::delete_endpoint_ids_for_order($order, $client);
     }
@@ -595,12 +595,12 @@ final class Ax402_WC_Order_Payment
      */
     private static function delete_stale_endpoint_ids(
         WC_Order $order,
-        Ax402_WC_Control_Plane_Client $client,
+        Launa_WC_Control_Plane_Client $client,
         array $previous_ids,
         string $keep_id,
         string $api_id
     ): void {
-        $fallback_api_ids = Ax402_WC_Settings::configured_api_ids();
+        $fallback_api_ids = Launa_WC_Settings::configured_api_ids();
         if ($api_id !== '') {
             array_unshift($fallback_api_ids, $api_id);
             $fallback_api_ids = array_values(array_unique($fallback_api_ids));
@@ -621,14 +621,14 @@ final class Ax402_WC_Order_Payment
                 }
             }
             if (!$deleted && $last_error !== '') {
-                $order->add_order_note('Ax402 endpoint cleanup failed: ' . $last_error);
+                $order->add_order_note('Launa endpoint cleanup failed: ' . $last_error);
             }
         }
     }
 
     private static function delete_endpoint_ids_for_order(
         WC_Order $order,
-        ?Ax402_WC_Control_Plane_Client $client = null
+        ?Launa_WC_Control_Plane_Client $client = null
     ): void {
         $by_endpoint = [];
         foreach (self::settlement_options_from_order($order) as $option) {
@@ -646,12 +646,12 @@ final class Ax402_WC_Order_Payment
             return;
         }
 
-        $fallback_api_ids = Ax402_WC_Settings::configured_api_ids();
+        $fallback_api_ids = Launa_WC_Settings::configured_api_ids();
         if ($fallback_api_ids === []) {
             return;
         }
 
-        $client ??= Ax402_WC_Settings::client();
+        $client ??= Launa_WC_Settings::client();
         if ($client === null) {
             return;
         }
@@ -670,7 +670,7 @@ final class Ax402_WC_Order_Payment
                 }
             }
             if (!$deleted && $last_error !== '') {
-                $order->add_order_note('Ax402 endpoint cleanup failed: ' . $last_error);
+                $order->add_order_note('Launa endpoint cleanup failed: ' . $last_error);
             }
         }
 

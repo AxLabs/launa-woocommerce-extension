@@ -4,17 +4,17 @@ This plugin exposes a **separate** UCP shopping + x402 payment surface so buying
 
 Protocol version: **2026-08-25** (current `ucp.dev` release). Discovery advertises both REST and MCP. The Shopify `ucp` CLI (0.6.x) negotiates MCP only.
 
-x402 payment on UCP follows **[ucp-x402-binding](https://github.com/AxLabs/ucp-x402-binding)** (this plugin implements the External-URL path in that spec: 402 on shop complete, `resource.url` stays the Ax402 gateway).
+x402 payment on UCP follows **[ucp-x402-binding](https://github.com/AxLabs/ucp-x402-binding)** (this plugin implements the External-URL path in that spec: 402 on shop complete, `resource.url` stays the Launa gateway).
 
-Humans keep using checkout → pay page. Legacy agents keep using `/wp-json/ax402/v1`. UCP is **on by default**.
+Humans keep using checkout → pay page. Legacy agents keep using `/wp-json/launa/v1`. UCP is **on by default**.
 
 | Buyer | Surface |
 |---|---|
-| Human | WooCommerce checkout → Ax402 pay page |
-| Legacy agent | `/wp-json/ax402/v1/products` + `/orders` (hands out `payment_url`) |
+| Human | WooCommerce checkout → Launa pay page |
+| Legacy agent | `/wp-json/launa/v1/products` + `/orders` (hands out `payment_url`) |
 | UCP agent | `GET /.well-known/ucp` + REST `/wp-json/ucp/v1` and MCP `/wp-json/ucp/v1/mcp` |
 
-Disable it in **WooCommerce → Settings → Payments → Ax402 → UCP for agents** if you do not want agent discovery. It does not require the human payment method to be offered at checkout, but it does require the same API key, pay-to address, and settlement tokens that `prepare()` already uses.
+Disable it in **WooCommerce → Settings → Payments → Launa → UCP for agents** if you do not want agent discovery. It does not require the human payment method to be offered at checkout, but it does require the same API key, pay-to address, and settlement tokens that `prepare()` already uses.
 
 ---
 
@@ -40,16 +40,16 @@ This is the important part. Read it before changing complete.
 
 ### Textbook x402 (Same-URL)
 
-Client requests **URL A** → 402 with `resource` = A → retries **A** with `PAYMENT-SIGNATURE`. A facilitator (`/verify`, `/settle`) is merchant-side only. Clients never see it. Ax402 cannot verify a shop URL today, so this plugin does not rewrite `resource` to the UCP complete URL.
+Client requests **URL A** → 402 with `resource` = A → retries **A** with `PAYMENT-SIGNATURE`. A facilitator (`/verify`, `/settle`) is merchant-side only. Clients never see it. Launa cannot verify a shop URL today, so this plugin does not rewrite `resource` to the UCP complete URL.
 
-### Ax402 today
+### Launa today
 
 The **gateway URL is the resource server**. Humans pass `resourceUrl={gatewayUrl}` on the pay page. Legacy agents receive `payment_url`. After settlement the gateway calls Woo fulfill. That is a valid x402 payment **of the gateway resource**.
 
 ### What this plugin does (External-URL)
 
 ```text
-Agent                         Shop UCP                         Ax402 gateway
+Agent                         Shop UCP                         Launa gateway
   |                              |                                   |
   | POST .../complete            |                                   |
   |   (no payment)               |                                   |
@@ -75,16 +75,16 @@ Agent                         Shop UCP                         Ax402 gateway
 Rules:
 
 - **UCP JSON** (discovery, catalog, session bodies, REST 402 **JSON body**) never contains gateway hosts, API ids, endpoint ids, fulfill tokens, or `payment_url`.
-- The **PAYMENT-REQUIRED header** still contains the Ax402 gateway URL inside x402 `resource`. That is the only leak on the REST challenge, and it is required for Ax402 verification. The challenge **is** the instruction: `resource.url` = where, `accepts[]` = what, `bazaar.input.method` = how.
+- The **PAYMENT-REQUIRED header** still contains the Launa gateway URL inside x402 `resource`. That is the only leak on the REST challenge, and it is required for Launa verification. The challenge **is** the instruction: `resource.url` = where, `accepts[]` = what, `bazaar.input.method` = how.
 - **MCP** copies that same `PaymentRequired` object into the tool result: x402-standard `structuredContent` (x402Version / resource / accepts at the top of the object), nested `structuredContent.payment_required` for UCP session clients, and a MAY mirror at `result._meta["x402/payment-required"]`. JSON-RPC stays HTTP 200. That is the same leak as the header, in JSON, and only on MCP complete. **Never pay the MCP JSON-RPC URL.**
 - If the gateway’s **PAYMENT-RESPONSE** includes a gateway `resourceUrl`, the plugin **redacts** those URLs inside the UCP JSON `x402_receipt` field. The `PAYMENT-RESPONSE` header is forwarded unchanged.
 - **Derivation rule:** if `resource.url` equals shop complete, retry complete with `PAYMENT-SIGNATURE` (Same-URL). If it differs (this plugin), the agent pays `resource.url` with standard x402, then POSTs complete again. The shop **MUST NOT** replay `PAYMENT-SIGNATURE` to the gateway (confused deputy: order #141 was marked paid with no settlement).
 - A signature on complete is treated as **reconcile only** (poll settlement / already-paid). The shop does not impersonate the buyer.
 - Hedera `PAYMENT-SIGNATURE` JWTs are often larger than Apache/ngrok header limits. On the External-URL path the signature goes to the gateway, which avoids the shop’s header limits. REST JSON body `payment.payment_signature` / MCP `params._meta["x402/payment"]` remain the Same-URL retry vehicle.
 
-Strict hide (`resource` = shop complete URL) is deferred until Ax402 can verify shop-bound payments.
+Strict hide (`resource` = shop complete URL) is deferred until Launa can verify shop-bound payments.
 
-The same-origin **pay-proxy** used by the human pay page is unchanged. UCP complete uses `Ax402_WC_Ucp_Gateway_Http` only to **GET** the challenge (never with the buyer’s signature).
+The same-origin **pay-proxy** used by the human pay page is unchanged. UCP complete uses `Launa_WC_Ucp_Gateway_Http` only to **GET** the challenge (never with the buyer’s signature).
 
 ---
 
@@ -114,9 +114,9 @@ The same-origin **pay-proxy** used by the human pay page is unchanged. UCP compl
 
 Order-level tax/shipping remainders beyond 2 decimals are **ceiled** to the next cent so we never undercharge.
 
-**`Ax402_WC_Order_Payment::prepare()` runs only when the session is `ready_for_complete`.** Creating a session for a shippable SKU does **not** create Ax402 endpoints yet (legacy agent REST still prepares immediately — that path is unchanged). If line items or address change after prepare, endpoints are deleted and recreated for the new total.
+**`Launa_WC_Order_Payment::prepare()` runs only when the session is `ready_for_complete`.** Creating a session for a shippable SKU does **not** create Launa endpoints yet (legacy agent REST still prepares immediately — that path is unchanged). If line items or address change after prepare, endpoints are deleted and recreated for the new total.
 
-The complete request force-reconciles against Ax402 settlements. First complete is a fast 402. After the agent has paid the gateway, complete polls reconcile for up to ~10 seconds when the gateway already reports HTTP 200 (fulfill ACKs before the ledger row on Hedera). Agents do not observe `complete_in_progress` on the wire; they get `402` or `completed` (or a recoverable error). REST honors `Idempotency-Key` when present (same key returns the stored response). MCP requires `meta["idempotency-key"]` on `complete_checkout`.
+The complete request force-reconciles against Launa settlements. First complete is a fast 402. After the agent has paid the gateway, complete polls reconcile for up to ~10 seconds when the gateway already reports HTTP 200 (fulfill ACKs before the ledger row on Hedera). Agents do not observe `complete_in_progress` on the wire; they get `402` or `completed` (or a recoverable error). REST honors `Idempotency-Key` when present (same key returns the stored response). MCP requires `meta["idempotency-key"]` on `complete_checkout`.
 
 Status machine (UCP 2026-08-25 enums): `incomplete` → `ready_for_complete` → (402 stays ready) → `completed` / `canceled`. If a destination is set but Woo has no shipping rates, status is `requires_escalation` (not a message code) and `continue_url` is the human checkout URL. A gateway challenge fetch failure returns a recoverable `payment_failed` and stays `ready_for_complete`. We do not mark `payment_failed` as a terminal UCP status while a settlement might still land. Non-terminal sessions include `continue_url` (MUST for `requires_escalation`). `complete_in_progress` is not observed on the wire (reconcile runs inside complete). Ready sessions MAY include Action `org.x402.payment.challenge` (text instructions only; payment still works if the agent ignores it).
 
@@ -133,8 +133,8 @@ Shopify’s CLI negotiates **MCP only**. Two wire details that break agents if i
 1. **`--input` is wrapped** under `cart` / `checkout` / `catalog`. Pass **flat** fields (`line_items`, `fulfillment`, `query`). Example: `ucp cart create --input '{"line_items":[{"item":{"id":"18"},"quantity":1}]}'`. Nested `{ "cart": { "line_items": … } }` is also accepted (including a CLI double-wrap).
 2. **Resource ids are positional** on get/update/complete (`ucp checkout update <id> --input '…'`). Create ops take no id. That is CLI shape, not this plugin.
 3. **Postal fields are UCP 2026-08-25 names:** `street_address`, `address_locality`, `address_region`, `postal_code`, `address_country`. `ucp checkout update --input-schema` now lists those. Common aliases (`address_line_1`, `city`, `country`, …) are accepted so a mistyped payload is not silently dropped.
-4. **`ucp checkout complete` without settlement does not place the order.** POST complete to get HTTP 402 / `PAYMENT-REQUIRED`. Pay **`payment_required.resource.url`** with standard x402 (typically GET; see `bazaar.input.method`). That URL is the Ax402 gateway **inside** the signed challenge — do not treat shop complete as the x402 resource on this External-URL path, and do not POST `/wp-json/ucp/v1/mcp`. Then `ucp checkout complete` again (reconcile, fresh Idempotency-Key / `meta["idempotency-key"]`) and `ucp checkout get` / `ucp order get`. Binding: https://github.com/AxLabs/ucp-x402-binding
-5. **Discovery `x402.assets` is merchant capability, not this order’s quote.** Each enabled settlement token gets its **own** Ax402 endpoint (one `accept`). Complete without an instrument preference 402s the **first** prepared token, or the token stored from `checkout update` / a prior complete. `payment_required.accepts` is **that resource only** — other networks (e.g. XGAS on `eip155:47763`) will not appear there, even though `GET` checkout `payment.instruments[]` lists every prepared token. To quote another instrument, `PUT`/`update` or retry complete with that instrument `selected` (network + asset), then pay **the new** challenge as-is. Filtering a wallet pay to a network/asset that is not in that challenge’s `accepts[]` will fail (`no accept matched filters`). Tokens with no USD rate are omitted from the quote (order note: “Omitted (no USD rate)”). Do not merge every asset into one `payment_required` — that would bind the wrong x402 resource.
+4. **`ucp checkout complete` without settlement does not place the order.** POST complete to get HTTP 402 / `PAYMENT-REQUIRED`. Pay **`payment_required.resource.url`** with standard x402 (typically GET; see `bazaar.input.method`). That URL is the Launa gateway **inside** the signed challenge — do not treat shop complete as the x402 resource on this External-URL path, and do not POST `/wp-json/ucp/v1/mcp`. Then `ucp checkout complete` again (reconcile, fresh Idempotency-Key / `meta["idempotency-key"]`) and `ucp checkout get` / `ucp order get`. Binding: https://github.com/AxLabs/ucp-x402-binding
+5. **Discovery `x402.assets` is merchant capability, not this order’s quote.** Each enabled settlement token gets its **own** Launa endpoint (one `accept`). Complete without an instrument preference 402s the **first** prepared token, or the token stored from `checkout update` / a prior complete. `payment_required.accepts` is **that resource only** — other networks (e.g. XGAS on `eip155:47763`) will not appear there, even though `GET` checkout `payment.instruments[]` lists every prepared token. To quote another instrument, `PUT`/`update` or retry complete with that instrument `selected` (network + asset), then pay **the new** challenge as-is. Filtering a wallet pay to a network/asset that is not in that challenge’s `accepts[]` will fail (`no accept matched filters`). Tokens with no USD rate are omitted from the quote (order note: “Omitted (no USD rate)”). Do not merge every asset into one `payment_required` — that would bind the wrong x402 resource.
 
 WooCommerce has no first-class gift checkout; this plugin does not advertise `is_gift`. Put a gift note in the buyer name / merchant-hosted continue URL if you need one.
 
@@ -168,7 +168,7 @@ Cart and checkout share one Woo order. Cart id = checkout session id = Woo `orde
 | `ucp_enabled` | `yes` | Serves `/.well-known/ucp` and `/wp-json/ucp/v1` |
 | `ucp_max_amount` | empty | Optional digits-only `x402.max_amount` in the discovery handler |
 
-Uninstall still deletes `ax402_wc_settings` (covers the new keys). The profile is cached 5 minutes and busted on settings save.
+Uninstall still deletes `launa_wc_settings` (covers the new keys). The profile is cached 5 minutes and busted on settings save.
 
 ---
 
@@ -176,25 +176,25 @@ Uninstall still deletes `ax402_wc_settings` (covers the new keys). The profile i
 
 | Class | Role |
 |---|---|
-| `Ax402_WC_Ucp_Discovery` | Rewrite `/.well-known/ucp` |
-| `Ax402_WC_Ucp_Profile_Builder` | Discovery JSON from enabled tokens |
-| `Ax402_WC_Ucp_Rest_Controller` | Routes, `ucp_enabled` gate |
-| `Ax402_WC_Ucp_Catalog` | Search / lookup / get_product |
-| `Ax402_WC_Ucp_Cart` | Create / get / update / cancel cart |
-| `Ax402_WC_Ucp_Checkout` | Create / get / update / cancel; `cart_id` conversion; deferred `prepare()` |
-| `Ax402_WC_Ucp_Order` | `GET /orders/{id}` after payment |
-| `Ax402_WC_Ucp_Fulfillment` | Woo rates / local pickup ↔ UCP fulfillment |
-| `Ax402_WC_Ucp_Lines` | Shared line-item and buyer writes |
-| `Ax402_WC_Ucp_Mapper` | `WC_Order` → UCP JSON (leak-checked) |
-| `Ax402_WC_Ucp_Money` | USD → cents (exact vs ceil) |
-| `Ax402_WC_Ucp_Status` | Pure status machine |
-| `Ax402_WC_Ucp_Asset_Match` | Instrument → settlement option |
-| `Ax402_WC_Ucp_Complete` | 402 challenge relay + settlement reconcile (never replays signatures) |
-| `Ax402_WC_Ucp_Complete_Idempotency` | REST `Idempotency-Key` / MCP `meta["idempotency-key"]` replay store |
-| `Ax402_WC_Ucp_Gateway_Http` | Allowlisted gateway HTTP (UCP only) |
-| `Ax402_WC_Ucp_Mcp` | JSON-RPC MCP adapter (`initialize`, `tools/list`, `tools/call`, OpenRPC aliases) |
-| `Ax402_WC_Ucp_Mcp_Payment` | MCP x402 wire: PaymentRequired on `structuredContent` (+ nested `payment_required`), `_meta["x402/payment"]` on retry |
-| `Ax402_WC_Ucp_Leak` | Facilitator-string scanner for tests |
+| `Launa_WC_Ucp_Discovery` | Rewrite `/.well-known/ucp` |
+| `Launa_WC_Ucp_Profile_Builder` | Discovery JSON from enabled tokens |
+| `Launa_WC_Ucp_Rest_Controller` | Routes, `ucp_enabled` gate |
+| `Launa_WC_Ucp_Catalog` | Search / lookup / get_product |
+| `Launa_WC_Ucp_Cart` | Create / get / update / cancel cart |
+| `Launa_WC_Ucp_Checkout` | Create / get / update / cancel; `cart_id` conversion; deferred `prepare()` |
+| `Launa_WC_Ucp_Order` | `GET /orders/{id}` after payment |
+| `Launa_WC_Ucp_Fulfillment` | Woo rates / local pickup ↔ UCP fulfillment |
+| `Launa_WC_Ucp_Lines` | Shared line-item and buyer writes |
+| `Launa_WC_Ucp_Mapper` | `WC_Order` → UCP JSON (leak-checked) |
+| `Launa_WC_Ucp_Money` | USD → cents (exact vs ceil) |
+| `Launa_WC_Ucp_Status` | Pure status machine |
+| `Launa_WC_Ucp_Asset_Match` | Instrument → settlement option |
+| `Launa_WC_Ucp_Complete` | 402 challenge relay + settlement reconcile (never replays signatures) |
+| `Launa_WC_Ucp_Complete_Idempotency` | REST `Idempotency-Key` / MCP `meta["idempotency-key"]` replay store |
+| `Launa_WC_Ucp_Gateway_Http` | Allowlisted gateway HTTP (UCP only) |
+| `Launa_WC_Ucp_Mcp` | JSON-RPC MCP adapter (`initialize`, `tools/list`, `tools/call`, OpenRPC aliases) |
+| `Launa_WC_Ucp_Mcp_Payment` | MCP x402 wire: PaymentRequired on `structuredContent` (+ nested `payment_required`), `_meta["x402/payment"]` on retry |
+| `Launa_WC_Ucp_Leak` | Facilitator-string scanner for tests |
 
 Human-flow classes (`class-pay-page.php`, Blocks, `class-gateway-proxy-controller.php`, legacy `class-agent-rest-controller.php`) are not rewritten. The only shared-pipeline change is **additive** FX metadata on settlement options.
 
@@ -209,9 +209,9 @@ npm run test:e2e-ucp       # needs wp-env, UCP enabled, public WP_BASE_URL, buye
 
 Unit tests do not boot WordPress. They lock the protocol rules (cents, discovery shape, no gateway host in JSON, 402 header forwarding). Live settlement is the E2E script.
 
-Seed a shippable SKU `ax402-ship-box` plus a US flat-rate zone for the physical path. Virtual path uses `ax402-micropay` ($0.01). Sub-cent SKUs (`ax402-signal`, `ax402-dust`) must **not** appear in UCP search.
+Seed a shippable SKU `launa-ship-box` plus a US flat-rate zone for the physical path. Virtual path uses `launa-micropay` ($0.01). Sub-cent SKUs (`launa-signal`, `launa-dust`) must **not** appear in UCP search.
 
-Seed writes `ucp_enabled=yes` unless `AX402_UCP_ENABLED=no` (then re-run `npm run env:e2e`).
+Seed writes `ucp_enabled=yes` unless `LAUNA_UCP_ENABLED=no` (then re-run `npm run env:e2e`).
 
 Out of this version: discount capability, A2A, HTTP Message Signatures, rewriting x402 `resource` to the shop URL.
 

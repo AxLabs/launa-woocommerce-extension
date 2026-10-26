@@ -13,7 +13,7 @@ defined('ABSPATH') || exit;
  * then complete_checkout again with a fresh meta["idempotency-key"]. HTTP 402
  * headers stay for REST.
  */
-final class Ax402_WC_Ucp_Mcp
+final class Launa_WC_Ucp_Mcp
 {
     public const TOOLS = [
         'search_catalog',
@@ -33,10 +33,10 @@ final class Ax402_WC_Ucp_Mcp
 
     public function handle(WP_REST_Request $request): WP_REST_Response
     {
-        if (!Ax402_WC_Settings::ucp_enabled()) {
-            return Ax402_WC_Ucp_Response::rest_error(
+        if (!Launa_WC_Settings::ucp_enabled()) {
+            return Launa_WC_Ucp_Response::rest_error(
                 404,
-                [Ax402_WC_Ucp_Response::message(
+                [Launa_WC_Ucp_Response::message(
                     'error',
                     'not_found',
                     'UCP is disabled on this store.',
@@ -148,8 +148,8 @@ final class Ax402_WC_Ucp_Mcp
                 'tools' => ['listChanged' => false],
             ],
             'serverInfo' => [
-                'name' => 'ax402-woocommerce-ucp',
-                'version' => defined('AX402_WC_VERSION') ? AX402_WC_VERSION : '0.2.0',
+                'name' => 'launa-woocommerce-ucp',
+                'version' => defined('LAUNA_WC_VERSION') ? LAUNA_WC_VERSION : '0.2.0',
             ],
         ];
     }
@@ -562,10 +562,10 @@ final class Ax402_WC_Ucp_Mcp
             return new WP_REST_Response(self::rpc_error($id, -32601, 'Unknown tool'), 200);
         }
 
-        $signature = Ax402_WC_Ucp_Mcp_Payment::signature_from_call($params, $arguments);
-        $signature_data = Ax402_WC_Ucp_Mcp_Payment::signature_data_from_call($params, $arguments);
+        $signature = Launa_WC_Ucp_Mcp_Payment::signature_from_call($params, $arguments);
+        $signature_data = Launa_WC_Ucp_Mcp_Payment::signature_data_from_call($params, $arguments);
         if ($signature !== '') {
-            $arguments = Ax402_WC_Ucp_Mcp_Payment::inject_signature($arguments, $signature, $signature_data);
+            $arguments = Launa_WC_Ucp_Mcp_Payment::inject_signature($arguments, $signature, $signature_data);
             $request->set_header('PAYMENT-SIGNATURE', $signature);
             if ($signature_data !== '') {
                 $request->set_header('PAYMENT-SIGNATURE-DATA', $signature_data);
@@ -574,11 +574,11 @@ final class Ax402_WC_Ucp_Mcp
 
         $inner = null;
         if ($name === 'complete_checkout') {
-            $idempotency_key = Ax402_WC_Ucp_Complete_Idempotency::from_mcp_arguments($arguments);
+            $idempotency_key = Launa_WC_Ucp_Complete_Idempotency::from_mcp_arguments($arguments);
             if ($idempotency_key === '') {
-                $inner = Ax402_WC_Ucp_Response::rest_error(
+                $inner = Launa_WC_Ucp_Response::rest_error(
                     200,
-                    [Ax402_WC_Ucp_Response::message(
+                    [Launa_WC_Ucp_Response::message(
                         'error',
                         'invalid',
                         'complete_checkout requires meta["idempotency-key"]. Use a fresh key for each complete attempt.',
@@ -605,7 +605,7 @@ final class Ax402_WC_Ucp_Mcp
             $data = [];
         }
         $http = (int) $inner->get_status();
-        $attached = Ax402_WC_Ucp_Mcp_Payment::attach_to_tool_result($data, $inner->get_headers());
+        $attached = Launa_WC_Ucp_Mcp_Payment::attach_to_tool_result($data, $inner->get_headers());
         $data = $attached['data'];
         $tool = self::tool_result_payload($data, $http, $attached['meta']);
         // JSON-RPC tools/call must stay HTTP 200. Shopify UCP CLI treats a 402
@@ -635,10 +635,10 @@ final class Ax402_WC_Ucp_Mcp
         array $body,
         WP_REST_Request $request
     ): WP_REST_Response|WP_Error {
-        $catalog = new Ax402_WC_Ucp_Catalog();
-        $cart = new Ax402_WC_Ucp_Cart();
-        $checkout = new Ax402_WC_Ucp_Checkout();
-        $order = new Ax402_WC_Ucp_Order();
+        $catalog = new Launa_WC_Ucp_Catalog();
+        $cart = new Launa_WC_Ucp_Cart();
+        $checkout = new Launa_WC_Ucp_Checkout();
+        $order = new Launa_WC_Ucp_Order();
 
         return match ($tool) {
             'search_catalog' => $catalog->search($body),
@@ -651,12 +651,12 @@ final class Ax402_WC_Ucp_Mcp
             'create_checkout' => $checkout->create($body),
             'get_checkout' => $checkout->get($session_id),
             'update_checkout' => $checkout->update($session_id, $body),
-            'complete_checkout' => (new Ax402_WC_Ucp_Complete())->handle($session_id, $request, $body),
+            'complete_checkout' => (new Launa_WC_Ucp_Complete())->handle($session_id, $request, $body),
             'cancel_checkout' => $checkout->cancel($session_id),
             'get_order' => $order->get($session_id),
-            default => Ax402_WC_Ucp_Response::rest_error(
+            default => Launa_WC_Ucp_Response::rest_error(
                 400,
-                [Ax402_WC_Ucp_Response::message('error', 'invalid', 'Unknown tool', 'unrecoverable')]
+                [Launa_WC_Ucp_Response::message('error', 'invalid', 'Unknown tool', 'unrecoverable')]
             ),
         };
     }
@@ -699,10 +699,10 @@ final class Ax402_WC_Ucp_Mcp
         if (isset($data['payment_required']) && is_array($data['payment_required'])) {
             $required = $data['payment_required'];
         } elseif (
-            isset($meta[Ax402_WC_Ucp_Mcp_Payment::META_PAYMENT_REQUIRED])
-            && is_array($meta[Ax402_WC_Ucp_Mcp_Payment::META_PAYMENT_REQUIRED])
+            isset($meta[Launa_WC_Ucp_Mcp_Payment::META_PAYMENT_REQUIRED])
+            && is_array($meta[Launa_WC_Ucp_Mcp_Payment::META_PAYMENT_REQUIRED])
         ) {
-            $required = $meta[Ax402_WC_Ucp_Mcp_Payment::META_PAYMENT_REQUIRED];
+            $required = $meta[Launa_WC_Ucp_Mcp_Payment::META_PAYMENT_REQUIRED];
             $data['payment_required'] = $required;
         }
         if ($required === []) {

@@ -9,7 +9,7 @@ defined('ABSPATH') || exit;
  * Public capability is knowing the session id (Woo order key), same as legacy
  * agent REST. UCP-Agent is parsed when present and not required in v0.2.
  */
-final class Ax402_WC_Ucp_Rest_Controller
+final class Launa_WC_Ucp_Rest_Controller
 {
     public const NS = 'ucp/v1';
 
@@ -96,7 +96,7 @@ final class Ax402_WC_Ucp_Rest_Controller
             return $denied;
         }
         $this->note_agent($request, null);
-        return (new Ax402_WC_Ucp_Catalog())->search($this->shopping_body($request, 'catalog'));
+        return (new Launa_WC_Ucp_Catalog())->search($this->shopping_body($request, 'catalog'));
     }
 
     public function catalog_lookup(WP_REST_Request $request): WP_REST_Response|WP_Error
@@ -105,7 +105,7 @@ final class Ax402_WC_Ucp_Rest_Controller
         if ($denied !== null) {
             return $denied;
         }
-        return (new Ax402_WC_Ucp_Catalog())->lookup($this->shopping_body($request, 'catalog'));
+        return (new Launa_WC_Ucp_Catalog())->lookup($this->shopping_body($request, 'catalog'));
     }
 
     public function catalog_product(WP_REST_Request $request): WP_REST_Response|WP_Error
@@ -114,12 +114,12 @@ final class Ax402_WC_Ucp_Rest_Controller
         if ($denied !== null) {
             return $denied;
         }
-        return (new Ax402_WC_Ucp_Catalog())->get_product($this->shopping_body($request, 'catalog'));
+        return (new Launa_WC_Ucp_Catalog())->get_product($this->shopping_body($request, 'catalog'));
     }
 
     public function mcp(WP_REST_Request $request): WP_REST_Response
     {
-        return (new Ax402_WC_Ucp_Mcp())->handle($request);
+        return (new Launa_WC_Ucp_Mcp())->handle($request);
     }
 
     public function create_session(WP_REST_Request $request): WP_REST_Response|WP_Error
@@ -128,7 +128,7 @@ final class Ax402_WC_Ucp_Rest_Controller
         if ($denied !== null) {
             return $denied;
         }
-        $checkout = new Ax402_WC_Ucp_Checkout();
+        $checkout = new Launa_WC_Ucp_Checkout();
         $response = $checkout->create($this->shopping_body($request, 'checkout'));
         $this->stamp_agent($request, $response);
         return $response;
@@ -140,7 +140,7 @@ final class Ax402_WC_Ucp_Rest_Controller
         if ($denied !== null) {
             return $denied;
         }
-        return (new Ax402_WC_Ucp_Checkout())->get((string) $request['id']);
+        return (new Launa_WC_Ucp_Checkout())->get((string) $request['id']);
     }
 
     public function update_session(WP_REST_Request $request): WP_REST_Response|WP_Error
@@ -149,7 +149,7 @@ final class Ax402_WC_Ucp_Rest_Controller
         if ($denied !== null) {
             return $denied;
         }
-        return (new Ax402_WC_Ucp_Checkout())->update(
+        return (new Launa_WC_Ucp_Checkout())->update(
             (string) $request['id'],
             $this->shopping_body($request, 'checkout')
         );
@@ -161,7 +161,7 @@ final class Ax402_WC_Ucp_Rest_Controller
         if ($denied !== null) {
             return $denied;
         }
-        return (new Ax402_WC_Ucp_Complete())->handle(
+        return (new Launa_WC_Ucp_Complete())->handle(
             (string) $request['id'],
             $request,
             $this->shopping_body($request, 'checkout')
@@ -174,7 +174,7 @@ final class Ax402_WC_Ucp_Rest_Controller
         if ($denied !== null) {
             return $denied;
         }
-        return (new Ax402_WC_Ucp_Checkout())->cancel((string) $request['id']);
+        return (new Launa_WC_Ucp_Checkout())->cancel((string) $request['id']);
     }
 
     public function create_cart(WP_REST_Request $request): WP_REST_Response|WP_Error
@@ -183,7 +183,7 @@ final class Ax402_WC_Ucp_Rest_Controller
         if ($denied !== null) {
             return $denied;
         }
-        $response = (new Ax402_WC_Ucp_Cart())->create($this->shopping_body($request, 'cart'));
+        $response = (new Launa_WC_Ucp_Cart())->create($this->shopping_body($request, 'cart'));
         $this->stamp_agent($request, $response);
         return $response;
     }
@@ -194,7 +194,7 @@ final class Ax402_WC_Ucp_Rest_Controller
         if ($denied !== null) {
             return $denied;
         }
-        return (new Ax402_WC_Ucp_Cart())->get((string) $request['id']);
+        return (new Launa_WC_Ucp_Cart())->get((string) $request['id']);
     }
 
     public function update_cart(WP_REST_Request $request): WP_REST_Response|WP_Error
@@ -203,7 +203,7 @@ final class Ax402_WC_Ucp_Rest_Controller
         if ($denied !== null) {
             return $denied;
         }
-        return (new Ax402_WC_Ucp_Cart())->update(
+        return (new Launa_WC_Ucp_Cart())->update(
             (string) $request['id'],
             $this->shopping_body($request, 'cart')
         );
@@ -215,7 +215,7 @@ final class Ax402_WC_Ucp_Rest_Controller
         if ($denied !== null) {
             return $denied;
         }
-        return (new Ax402_WC_Ucp_Cart())->cancel((string) $request['id']);
+        return (new Launa_WC_Ucp_Cart())->cancel((string) $request['id']);
     }
 
     public function get_order(WP_REST_Request $request): WP_REST_Response
@@ -224,18 +224,18 @@ final class Ax402_WC_Ucp_Rest_Controller
         if ($denied !== null) {
             return $denied;
         }
-        return (new Ax402_WC_Ucp_Order())->get((string) $request['id']);
+        return (new Launa_WC_Ucp_Order())->get((string) $request['id']);
     }
 
     private function disabled(): ?WP_REST_Response
     {
-        if (Ax402_WC_Settings::ucp_enabled()) {
+        if (Launa_WC_Settings::ucp_enabled()) {
             return null;
         }
 
-        return Ax402_WC_Ucp_Response::rest_error(
+        return Launa_WC_Ucp_Response::rest_error(
             404,
-            [Ax402_WC_Ucp_Response::message(
+            [Launa_WC_Ucp_Response::message(
                 'error',
                 'not_found',
                 'UCP is disabled on this store.',
@@ -260,7 +260,7 @@ final class Ax402_WC_Ucp_Rest_Controller
      */
     private function shopping_body(WP_REST_Request $request, string $nested): array
     {
-        return Ax402_WC_Ucp_Mcp::unwrap_shopping_body($this->json($request), $nested);
+        return Launa_WC_Ucp_Mcp::unwrap_shopping_body($this->json($request), $nested);
     }
 
     private function note_agent(WP_REST_Request $request, mixed $unused): void
@@ -279,9 +279,9 @@ final class Ax402_WC_Ucp_Rest_Controller
         if (!is_array($data) || empty($data['id']) || !is_string($data['id'])) {
             return;
         }
-        $order = Ax402_WC_Ucp_Checkout::order_from_key($data['id']);
+        $order = Launa_WC_Ucp_Checkout::order_from_key($data['id']);
         if ($order instanceof WC_Order) {
-            $order->update_meta_data(Ax402_WC_Ucp_Mapper::META_AGENT, $profile);
+            $order->update_meta_data(Launa_WC_Ucp_Mapper::META_AGENT, $profile);
             $order->save();
         }
     }

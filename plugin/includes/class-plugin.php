@@ -6,7 +6,7 @@ defined('ABSPATH') || exit;
 /**
  * Main plugin orchestrator.
  */
-final class Ax402_WC_Plugin
+final class Launa_WC_Plugin
 {
     private static ?self $instance = null;
 
@@ -35,17 +35,17 @@ final class Ax402_WC_Plugin
             add_action('woocommerce_blocks_loaded', [$this, 'register_blocks']);
         }
 
-        (new Ax402_WC_Pay_Page())->register();
-        (new Ax402_WC_Facade())->register();
-        (new Ax402_WC_Endpoint_Cleanup())->register();
+        (new Launa_WC_Pay_Page())->register();
+        (new Launa_WC_Facade())->register();
+        (new Launa_WC_Endpoint_Cleanup())->register();
         add_action('init', static function (): void {
-            (new Ax402_WC_Ucp_Discovery())->register();
+            (new Launa_WC_Ucp_Discovery())->register();
         });
-        add_action('update_option_ax402_wc_settings', [Ax402_WC_Ucp_Profile_Builder::class, 'bust']);
+        add_action('update_option_launa_wc_settings', [Launa_WC_Ucp_Profile_Builder::class, 'bust']);
     }
 
     /**
-     * When Ax402 is enabled, show at least 4 decimal places so sub-cent prices
+     * When Launa is enabled, show at least 4 decimal places so sub-cent prices
      * (e.g. $0.001) do not collapse to $0.00 in the shop.
      */
     public function price_decimals(int $decimals): int
@@ -93,7 +93,7 @@ final class Ax402_WC_Plugin
 
     private function is_gateway_enabled(): bool
     {
-        $settings = get_option('woocommerce_ax402_settings', []);
+        $settings = get_option('woocommerce_launa_settings', []);
         return is_array($settings) && (($settings['enabled'] ?? '') === 'yes');
     }
 
@@ -103,16 +103,16 @@ final class Ax402_WC_Plugin
      */
     public function register_gateway(array $gateways): array
     {
-        $gateways[] = Ax402_WC_Gateway_Ax402::class;
+        $gateways[] = Launa_WC_Gateway_Launa::class;
         return $gateways;
     }
 
     public function register_rest(): void
     {
-        (new Ax402_WC_Fulfill_Controller())->register();
-        (new Ax402_WC_Agent_Rest_Controller())->register();
-        (new Ax402_WC_Gateway_Proxy_Controller())->register();
-        (new Ax402_WC_Ucp_Rest_Controller())->register();
+        (new Launa_WC_Fulfill_Controller())->register();
+        (new Launa_WC_Agent_Rest_Controller())->register();
+        (new Launa_WC_Gateway_Proxy_Controller())->register();
+        (new Launa_WC_Ucp_Rest_Controller())->register();
     }
 
     public function register_blocks(): void
@@ -124,18 +124,18 @@ final class Ax402_WC_Plugin
         add_action(
             'woocommerce_blocks_payment_method_type_registration',
             static function ($registry): void {
-                $registry->register(new Ax402_WC_Blocks_Support());
+                $registry->register(new Launa_WC_Blocks_Support());
             }
         );
     }
 
     public function __clone(): void
     {
-        wc_doing_it_wrong(__FUNCTION__, 'Cloning is forbidden.', AX402_WC_VERSION);
+        wc_doing_it_wrong(__FUNCTION__, 'Cloning is forbidden.', LAUNA_WC_VERSION);
     }
 
     public function __wakeup(): void
     {
-        wc_doing_it_wrong(__FUNCTION__, 'Unserializing is forbidden.', AX402_WC_VERSION);
+        wc_doing_it_wrong(__FUNCTION__, 'Unserializing is forbidden.', LAUNA_WC_VERSION);
     }
 }

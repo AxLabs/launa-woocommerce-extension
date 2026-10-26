@@ -4,7 +4,7 @@ const webpack = require( 'webpack' );
 
 const hederaStub = path.resolve( __dirname, 'src/stubs/x402-hedera.js' );
 const hederaWalletStub = path.resolve( __dirname, 'src/stubs/hedera-wallet.js' );
-const evmOnly = process.env.AX402_EVM_ONLY === '1';
+const evmOnly = process.env.LAUNA_EVM_ONLY === '1' || process.env.AX402_EVM_ONLY === '1';
 
 const hederaResolve = evmOnly
 	? {
@@ -30,7 +30,7 @@ const hederaResolve = evmOnly
 const hederaPlugins = evmOnly
 	? [
 			new webpack.NormalModuleReplacementPlugin(
-				/[@\\/]ax402[\\/]react-paywall[\\/]dist[\\/]hederaWallet\.js$/,
+				/[@\\/]launaio[\\/]react-paywall[\\/]dist[\\/]hederaWallet\.js$/,
 				hederaWalletStub
 			),
 			new webpack.IgnorePlugin( {

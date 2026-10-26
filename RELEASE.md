@@ -1,6 +1,6 @@
 # Releases & versioning
 
-This document is the **source of truth** for cutting releases of the Ax402 WooCommerce plugin. Humans and coding agents should follow it whenever changing version numbers, shipping builds, creating GitHub Releases, or publishing to WordPress.org.
+This document is the **source of truth** for cutting releases of the Launa WooCommerce plugin. Humans and coding agents should follow it whenever changing version numbers, shipping builds, creating GitHub Releases, or publishing to WordPress.org.
 
 Current version lives in multiple files that **must stay identical** (see [Canonical version sources](#canonical-version-sources)).
 
@@ -8,7 +8,7 @@ Current version lives in multiple files that **must stay identical** (see [Canon
 
 | Place | Role |
 |---|---|
-| **This GitHub repo** ([AxLabs/ax402-woocommerce-extension](https://github.com/AxLabs/ax402-woocommerce-extension)) | **Development.** PRs, CI, history, annotated git tags, GitHub Releases with the installable zip. |
+| **This GitHub repo** ([AxLabs/launa-woocommerce-extension](https://github.com/AxLabs/launa-woocommerce-extension)) | **Development.** PRs, CI, history, annotated git tags, GitHub Releases with the installable zip. |
 | **WordPress.org SVN** (`https://plugins.svn.wordpress.org/ax402-for-woocommerce`) | **Directory publish only.** A release snapshot of the packaged plugin so [wordpress.org/plugins/ax402-for-woocommerce](https://wordpress.org/plugins/ax402-for-woocommerce/) can list and serve it. |
 
 We do **not** develop against SVN. Do not mirror every git commit. After a GitHub Release exists for `vX.Y.Z`, copy that packaged build into SVN `trunk/` and tag `tags/X.Y.Z` (no `v` prefix on the SVN tag).
@@ -39,7 +39,7 @@ All of these must match before tagging:
 | Location | Field |
 |---|---|
 | `plugin/ax402-for-woocommerce.php` | Header `* Version:` |
-| `plugin/ax402-for-woocommerce.php` | `AX402_WC_VERSION` constant |
+| `plugin/ax402-for-woocommerce.php` | `LAUNA_WC_VERSION` constant |
 | `plugin/readme.txt` | `Stable tag:` |
 | `package.json` | `"version"` |
 | `plugin/package.json` | `"version"` |
@@ -56,7 +56,7 @@ Do **not** hand-edit only one file. Prefer `bump-version.sh`.
 
 ## Changelog (GitHub only)
 
-**Canonical notes live on [GitHub Releases](https://github.com/AxLabs/ax402-woocommerce-extension/releases).** Do not maintain a second bullet list in `plugin/readme.txt`.
+**Canonical notes live on [GitHub Releases](https://github.com/AxLabs/launa-woocommerce-extension/releases).** Do not maintain a second bullet list in `plugin/readme.txt`.
 
 | Place | What to put there |
 |---|---|
@@ -181,7 +181,7 @@ svn checkout https://plugins.svn.wordpress.org/ax402-for-woocommerce \
 Working copy: `~/svn/ax402-for-woocommerce`. Example `0.4.3`:
 
 ```bash
-cd /path/to/ax402-woocommerce-extension
+cd /path/to/launa-woocommerce-extension
 source ~/.nvm/nvm.sh && nvm use
 bash bin/check-version.sh 0.4.3
 npm run package
@@ -256,7 +256,7 @@ Names in SVN `assets/` (and in git `wporg-assets/`):
 
 * `icon-128x128.png`, `icon-256x256.png`
 * `screenshot-1.png` … matching `== Screenshots ==` in `readme.txt`
-* `banner-772x250.png`, `banner-1544x500.png` — official **green** header. WordPress.org has **no** dark-mode banner filename; ink/cream masters live in `wporg-assets/src/` only (not SVN). Optional later: `banner-*-rtl.png` for RTL locales.
+* `banner-772x250.png`, `banner-1544x500.png` — current ink header with the lime Launa lockup. WordPress.org has **no** dark-mode banner filename, so this pair is what the directory shows. Older green/ink/cream masters in `wporg-assets/src/` are not uploaded. Optional later: `banner-*-rtl.png` for RTL locales.
 
 Set `svn:mime-type` `image/png` (or `image/jpeg`) so the directory does not force-download them. Handbook: [plugin assets](https://developer.wordpress.org/plugins/wordpress-org/plugin-assets/).
 

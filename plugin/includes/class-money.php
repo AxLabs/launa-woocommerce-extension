@@ -7,12 +7,12 @@ defined('ABSPATH') || exit;
 /**
  * Decimal / atomic amount helpers (no WordPress dependency).
  */
-final class Ax402_WC_Money
+final class Launa_WC_Money
 {
     public const USDC_DECIMALS = 6;
 
     /**
-     * Ax402 gateway rejects payment amounts with more than 6 fractional digits
+     * Launa gateway rejects payment amounts with more than 6 fractional digits
      * (even when the token itself has 18 decimals).
      */
     public const GATEWAY_MAX_FRACTION_DIGITS = 6;
@@ -151,7 +151,7 @@ final class Ax402_WC_Money
      * Multiply USD amount by a token-per-USD rate (decimal strings).
      *
      * Result is capped to {@see GATEWAY_MAX_FRACTION_DIGITS} (rounded up) so
-     * Ax402 accepts[] stay valid for 18-decimal tokens (ZCHF, XGAS, …).
+     * Launa accepts[] stay valid for 18-decimal tokens (ZCHF, XGAS, …).
      *
      * @throws InvalidArgumentException
      */

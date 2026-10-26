@@ -1,5 +1,5 @@
 /**
- * Stub for @ax402/react-paywall/dist/hederaWallet.js (EVM-only build).
+ * Stub for @launaio/react-paywall/dist/hederaWallet.js (EVM-only build).
  */
 
 function unsupported( name ) {

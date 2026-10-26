@@ -9,7 +9,7 @@ EXPECTED="${1:-}"
 EXPECTED="${EXPECTED#v}" # allow v0.1.0
 
 php_header=$(grep -E '^\s*\* Version:' plugin/ax402-for-woocommerce.php | head -1 | sed -E 's/.*Version:[[:space:]]*//')
-php_const=$(grep -E "define\('AX402_WC_VERSION'" plugin/ax402-for-woocommerce.php | sed -E "s/.*'([^']+)'.*/\1/")
+php_const=$(grep -E "define\('LAUNA_WC_VERSION'" plugin/ax402-for-woocommerce.php | sed -E "s/.*'([^']+)'.*/\1/")
 stable=$(grep -E '^Stable tag:' plugin/readme.txt | head -1 | sed -E 's/Stable tag:[[:space:]]*//')
 root_pkg=$(node -p "require('./package.json').version")
 plugin_pkg=$(node -p "require('./plugin/package.json').version")
@@ -24,7 +24,7 @@ check() {
 }
 
 check "plugin header Version" "$php_header"
-check "AX402_WC_VERSION" "$php_const"
+check "LAUNA_WC_VERSION" "$php_const"
 check "readme.txt Stable tag" "$stable"
 check "package.json" "$root_pkg"
 check "plugin/package.json" "$plugin_pkg"
@@ -35,7 +35,7 @@ if [[ "$php_header" != "$php_const" \
    || "$php_header" != "$plugin_pkg" ]]; then
   echo "Version sources are out of sync:" >&2
   echo "  plugin header:       $php_header" >&2
-  echo "  AX402_WC_VERSION:    $php_const" >&2
+  echo "  LAUNA_WC_VERSION:    $php_const" >&2
   echo "  readme Stable tag:   $stable" >&2
   echo "  package.json:        $root_pkg" >&2
   echo "  plugin/package.json: $plugin_pkg" >&2

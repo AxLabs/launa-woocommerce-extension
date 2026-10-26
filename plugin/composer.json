@@ -1,6 +1,6 @@
 {
   "name": "axlabs/ax402-for-woocommerce",
-  "description": "Ax402 payment gateway for WooCommerce",
+  "description": "Launa payment gateway for WooCommerce",
   "type": "wordpress-plugin",
   "license": "GPL-3.0-or-later",
   "require": {
@@ -17,7 +17,7 @@
   },
   "autoload-dev": {
     "psr-4": {
-      "Ax402\\WC\\Tests\\": "../tests/php/"
+      "Launa\\WC\\Tests\\": "../tests/php/"
     }
   },
   "scripts": {

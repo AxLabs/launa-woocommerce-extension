@@ -1,10 +1,10 @@
 <?php
 declare(strict_types=1);
 
-namespace Ax402\WC\Tests\Unit;
+namespace Launa\WC\Tests\Unit;
 
-use Ax402_WC_Ucp_Profile_Builder;
-use Ax402_WC_Ucp_Leak;
+use Launa_WC_Ucp_Profile_Builder;
+use Launa_WC_Ucp_Leak;
 use PHPUnit\Framework\TestCase;
 
 final class UcpProfileBuilderTest extends TestCase
@@ -38,7 +38,7 @@ final class UcpProfileBuilderTest extends TestCase
         $this->assertIsArray($profile['ucp']['services']);
         $this->assertSame('rest', $services['transport']);
         $this->assertSame('https://shop.example/wp-json/ucp/v1', $services['endpoint']);
-        $this->assertSame(Ax402_WC_Ucp_Profile_Builder::UCP_VERSION, $profile['ucp']['version']);
+        $this->assertSame(Launa_WC_Ucp_Profile_Builder::UCP_VERSION, $profile['ucp']['version']);
         $this->assertSame('2026-08-25', $profile['ucp']['version']);
         $mcp = $profile['ucp']['services']['dev.ucp.shopping'][1];
         $this->assertSame('mcp', $mcp['transport']);
@@ -58,7 +58,7 @@ final class UcpProfileBuilderTest extends TestCase
         $fulfillment = $profile['ucp']['capabilities']['dev.ucp.shopping.fulfillment'][0];
         $this->assertSame('dev.ucp.shopping.checkout', $fulfillment['extends']);
         $this->assertStringContainsString('/specification/shopping/extensions/fulfillment', (string) $fulfillment['spec']);
-        $this->assertSame(Ax402_WC_Ucp_Profile_Builder::HANDLER_SCHEMA, $profile['ucp']['payment_handlers']['org.x402.payment'][0]['schema']);
+        $this->assertSame(Launa_WC_Ucp_Profile_Builder::HANDLER_SCHEMA, $profile['ucp']['payment_handlers']['org.x402.payment'][0]['schema']);
         $this->assertSame('2026-08-25', $profile['ucp']['payment_handlers']['org.x402.payment'][0]['version']);
     }
 
@@ -96,14 +96,14 @@ final class UcpProfileBuilderTest extends TestCase
     public function test_no_facilitator_leakage(): void
     {
         $settings = $this->settings();
-        $profile = Ax402_WC_Ucp_Profile_Builder::build(
+        $profile = Launa_WC_Ucp_Profile_Builder::build(
             $settings,
             $this->platform,
             'https://shop.example/wp-json/ucp/v1'
         );
-        $this->assertSame([], Ax402_WC_Ucp_Leak::scan($profile, Ax402_WC_Ucp_Leak::needles($settings)));
+        $this->assertSame([], Launa_WC_Ucp_Leak::scan($profile, Launa_WC_Ucp_Leak::needles($settings)));
         $json = (string) json_encode($profile);
-        $this->assertStringNotContainsString('shop.dev.x.ax402.io', $json);
+        $this->assertStringNotContainsString('shop.dev.x.launa.io', $json);
         $this->assertStringNotContainsString('api_should_not_leak', $json);
         $this->assertStringNotContainsString('gatewayUrl', $json);
         $this->assertStringNotContainsString('payment_url', $json);
@@ -111,7 +111,7 @@ final class UcpProfileBuilderTest extends TestCase
 
     public function test_empty_tokens_omits_handler(): void
     {
-        $profile = Ax402_WC_Ucp_Profile_Builder::build(
+        $profile = Launa_WC_Ucp_Profile_Builder::build(
             ['enabled_token_ids' => []],
             $this->platform,
             'https://shop.example/wp-json/ucp/v1'
@@ -124,7 +124,7 @@ final class UcpProfileBuilderTest extends TestCase
      */
     private function profile(): array
     {
-        return Ax402_WC_Ucp_Profile_Builder::build(
+        return Launa_WC_Ucp_Profile_Builder::build(
             $this->settings(),
             $this->platform,
             'https://shop.example/wp-json/ucp/v1'
@@ -142,9 +142,9 @@ final class UcpProfileBuilderTest extends TestCase
                 'eip155:845320402:0xfde4c96c8593536e31f229ea8f37b2ada2699bb2',
             ],
             'ucp_max_amount' => '1000000',
-            'gateway_host' => 'shop.dev.x.ax402.io',
+            'gateway_host' => 'shop.dev.x.launa.io',
             'api_id' => 'api_should_not_leak',
-            'api_key' => 'ax402_live_secret',
+            'api_key' => 'launa_live_secret',
         ];
     }
 }

@@ -7,7 +7,7 @@ defined('ABSPATH') || exit;
  * UCP order resource (post-purchase). `digital` belongs here as
  * fulfillment.expectations[].method_type, not on checkout methods.
  */
-final class Ax402_WC_Ucp_Order
+final class Launa_WC_Ucp_Order
 {
     public const CAP = 'dev.ucp.shopping.order';
 
@@ -15,22 +15,22 @@ final class Ax402_WC_Ucp_Order
     {
         $order = self::from_id($id);
         if (!$order instanceof WC_Order) {
-            return Ax402_WC_Ucp_Response::rest_error(
+            return Launa_WC_Ucp_Response::rest_error(
                 404,
-                [Ax402_WC_Ucp_Response::message('error', 'not_found', 'Order not found.', 'unrecoverable')],
+                [Launa_WC_Ucp_Response::message('error', 'not_found', 'Order not found.', 'unrecoverable')],
                 self::CAP
             );
         }
 
-        Ax402_WC_Settlement_Reconcile::reconcile_order($order, null, true);
+        Launa_WC_Settlement_Reconcile::reconcile_order($order, null, true);
         $fresh = wc_get_order($order->get_id());
         if ($fresh instanceof WC_Order) {
             $order = $fresh;
         }
         if (!$order->is_paid()) {
-            return Ax402_WC_Ucp_Response::rest_error(
+            return Launa_WC_Ucp_Response::rest_error(
                 404,
-                [Ax402_WC_Ucp_Response::message('error', 'not_found', 'Order not found.', 'unrecoverable')],
+                [Launa_WC_Ucp_Response::message('error', 'not_found', 'Order not found.', 'unrecoverable')],
                 self::CAP
             );
         }
@@ -53,15 +53,15 @@ final class Ax402_WC_Ucp_Order
             }
         }
         if (!$order instanceof WC_Order) {
-            $order = Ax402_WC_Ucp_Checkout::order_from_key($id);
+            $order = Launa_WC_Ucp_Checkout::order_from_key($id);
         }
         if (!$order instanceof WC_Order) {
             return null;
         }
-        if ($order->get_payment_method() !== Ax402_WC_Gateway_Ax402::GATEWAY_ID) {
+        if ($order->get_payment_method() !== Launa_WC_Gateway_Launa::GATEWAY_ID) {
             return null;
         }
-        if ((string) $order->get_meta(Ax402_WC_Ucp_Mapper::META_UCP) !== '1') {
+        if ((string) $order->get_meta(Launa_WC_Ucp_Mapper::META_UCP) !== '1') {
             return null;
         }
 
@@ -75,15 +75,15 @@ final class Ax402_WC_Ucp_Order
     {
         $line_items = self::line_items($order);
         $payload = [
-            'ucp' => Ax402_WC_Ucp_Response::ucp(self::CAP),
+            'ucp' => Launa_WC_Ucp_Response::ucp(self::CAP),
             'id' => (string) $order->get_id(),
             'label' => $order->get_order_number(),
             'checkout_id' => $order->get_order_key(),
             'permalink_url' => $order->get_checkout_order_received_url(),
             'line_items' => $line_items,
             'fulfillment' => self::fulfillment($order, $line_items),
-            'currency' => Ax402_WC_Ucp_Money::CURRENCY,
-            'totals' => Ax402_WC_Ucp_Mapper::totals($order),
+            'currency' => Launa_WC_Ucp_Money::CURRENCY,
+            'totals' => Launa_WC_Ucp_Mapper::totals($order),
         ];
 
         $adjustments = self::adjustments($order);
@@ -91,7 +91,7 @@ final class Ax402_WC_Ucp_Order
             $payload['adjustments'] = $adjustments;
         }
 
-        Ax402_WC_Ucp_Leak::assert_clean($payload, Ax402_WC_Settings::all());
+        Launa_WC_Ucp_Leak::assert_clean($payload, Launa_WC_Settings::all());
 
         return $payload;
     }
@@ -111,7 +111,7 @@ final class Ax402_WC_Ucp_Order
             $refunded = $order->get_qty_refunded_for_item((int) $item_id);
             $total = max(0, $qty - abs($refunded));
             $product = $item->get_product();
-            $digital = $product instanceof WC_Product && Ax402_WC_Ucp_Fulfillment::product_is_digital($product);
+            $digital = $product instanceof WC_Product && Launa_WC_Ucp_Fulfillment::product_is_digital($product);
             $fulfilled = 0;
             if ($completed || ($digital && $order->is_paid())) {
                 $fulfilled = $total;
@@ -125,8 +125,8 @@ final class Ax402_WC_Ucp_Order
                 $status = 'partial';
             }
 
-            $unit = Ax402_WC_Ucp_Money::usd_to_cents_exact((string) $item->get_subtotal())
-                ?? Ax402_WC_Ucp_Money::usd_to_cents_ceil((string) $item->get_subtotal());
+            $unit = Launa_WC_Ucp_Money::usd_to_cents_exact((string) $item->get_subtotal())
+                ?? Launa_WC_Ucp_Money::usd_to_cents_ceil((string) $item->get_subtotal());
             $line_total = $unit ?? 0;
             $unit_price = $qty > 0 ? (int) round($line_total / $qty) : 0;
             $catalog_id = $product instanceof WC_Product
@@ -162,7 +162,7 @@ final class Ax402_WC_Ucp_Order
      */
     private static function fulfillment(WC_Order $order, array $line_items): array
     {
-        $pickup = Ax402_WC_Ucp_Fulfillment::selected_method_type($order) === 'pickup';
+        $pickup = Launa_WC_Ucp_Fulfillment::selected_method_type($order) === 'pickup';
         $by_type = ['digital' => [], 'shipping' => [], 'pickup' => []];
         foreach ($order->get_items() as $item_id => $item) {
             if (!$item instanceof WC_Order_Item_Product) {
@@ -171,24 +171,24 @@ final class Ax402_WC_Ucp_Order
             $qty = max(1, $item->get_quantity());
             $product = $item->get_product();
             $needs = $product instanceof WC_Product && $product->needs_shipping();
-            $type = Ax402_WC_Ucp_Fulfillment::expectation_method_type($needs, $pickup);
+            $type = Launa_WC_Ucp_Fulfillment::expectation_method_type($needs, $pickup);
             $by_type[$type][] = [
                 'id' => 'li_' . (string) $item_id,
                 'quantity' => $qty,
             ];
         }
 
-        $destination = Ax402_WC_Ucp_Fulfillment::postal_from_order($order);
+        $destination = Launa_WC_Ucp_Fulfillment::postal_from_order($order);
         if ($pickup) {
-            $loc_id = (string) $order->get_meta(Ax402_WC_Ucp_Fulfillment::META_PICKUP_LOCATION);
-            foreach (Ax402_WC_Ucp_Fulfillment::pickup_locations() as $loc) {
+            $loc_id = (string) $order->get_meta(Launa_WC_Ucp_Fulfillment::META_PICKUP_LOCATION);
+            foreach (Launa_WC_Ucp_Fulfillment::pickup_locations() as $loc) {
                 if ((string) ($loc['id'] ?? '') === $loc_id && is_array($loc['address'] ?? null)) {
                     $destination = $loc['address'];
                     break;
                 }
             }
             if ($destination === []) {
-                $destination = Ax402_WC_Ucp_Fulfillment::store_address();
+                $destination = Launa_WC_Ucp_Fulfillment::store_address();
             }
         }
 
@@ -250,7 +250,7 @@ final class Ax402_WC_Ucp_Order
     private static function adjustments(WC_Order $order): array
     {
         $refunded = (string) $order->get_total_refunded();
-        $cents = Ax402_WC_Ucp_Money::usd_to_cents_ceil($refunded) ?? 0;
+        $cents = Launa_WC_Ucp_Money::usd_to_cents_ceil($refunded) ?? 0;
         if ($cents <= 0) {
             return [];
         }

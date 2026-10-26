@@ -7,7 +7,7 @@ defined('ABSPATH') || exit;
 /**
  * Pure helpers for fulfill token checks (unit-testable).
  */
-final class Ax402_WC_Fulfill_Auth
+final class Launa_WC_Fulfill_Auth
 {
     public static function is_valid_token(string $expected, string $provided): bool
     {

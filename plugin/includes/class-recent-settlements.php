@@ -4,11 +4,11 @@ declare(strict_types=1);
 defined('ABSPATH') || exit;
 
 /**
- * Last settlements for the Ax402 settings screen.
+ * Last settlements for the Launa settings screen.
  */
-final class Ax402_WC_Recent_Settlements
+final class Launa_WC_Recent_Settlements
 {
-    public const INCOME_URL = 'https://ax402.io/dashboard/income';
+    public const INCOME_URL = 'https://launa.io/dashboard/income';
     public const LIMIT = 5;
 
     /**
@@ -22,16 +22,16 @@ final class Ax402_WC_Recent_Settlements
     public static function snapshot(int $limit = self::LIMIT): array
     {
         $empty = ['connected' => false, 'error' => '', 'has_more' => false, 'rows' => []];
-        if (Ax402_WC_Settings::client() === null || Ax402_WC_Settings::configured_api_ids() === []) {
+        if (Launa_WC_Settings::client() === null || Launa_WC_Settings::configured_api_ids() === []) {
             return $empty;
         }
 
         try {
-            $raw = Ax402_WC_Settlement_Reconcile::list_for_store();
+            $raw = Launa_WC_Settlement_Reconcile::list_for_store();
         } catch (Throwable) {
             return [
                 'connected' => true,
-                'error' => __('Could not load recent payments from Ax402.', 'ax402-for-woocommerce'),
+                'error' => __('Could not load recent payments from Launa.', 'ax402-for-woocommerce'),
                 'has_more' => false,
                 'rows' => [],
             ];
@@ -39,7 +39,7 @@ final class Ax402_WC_Recent_Settlements
 
         $sorted = self::sort_newest_first($raw);
         $limited = self::take_latest($sorted, max(1, $limit));
-        $platform = Ax402_WC_Platform_Config_Store::platform();
+        $platform = Launa_WC_Platform_Config_Store::platform();
 
         $rows = [];
         foreach ($limited['rows'] as $row) {
@@ -206,7 +206,7 @@ final class Ax402_WC_Recent_Settlements
             'when' => self::format_when($time),
             'when_tz' => self::timezone_label($time),
             'amount' => self::format_amount($amount, $symbol, $decimals),
-            'network' => $network !== '' ? Ax402_WC_Platform_Tokens::network_label($network) : '—',
+            'network' => $network !== '' ? Launa_WC_Platform_Tokens::network_label($network) : '—',
             'tx' => self::short_tx($tx),
             'tx_full' => $tx,
         ];
@@ -222,7 +222,7 @@ final class Ax402_WC_Recent_Settlements
         string $asset,
         string $symbol
     ): array {
-        foreach (Ax402_WC_Platform_Tokens::enabled_tokens($platform) as $token) {
+        foreach (Launa_WC_Platform_Tokens::enabled_tokens($platform) as $token) {
             $token_asset = (string) ($token['asset'] ?? $token['address'] ?? '');
             $token_network = (string) ($token['network'] ?? '');
             $token_symbol = (string) ($token['symbol'] ?? '');
@@ -245,7 +245,7 @@ final class Ax402_WC_Recent_Settlements
         }
 
         if (strtoupper($symbol) === 'USDC') {
-            return ['symbol' => $symbol, 'decimals' => Ax402_WC_Money::USDC_DECIMALS];
+            return ['symbol' => $symbol, 'decimals' => Launa_WC_Money::USDC_DECIMALS];
         }
 
         return ['symbol' => $symbol, 'decimals' => 0];
@@ -257,7 +257,7 @@ final class Ax402_WC_Recent_Settlements
             return $amount;
         }
         if ($decimals > 0 && preg_match('/^\d+$/', $amount) === 1) {
-            return Ax402_WC_Money::from_atomic($amount, $decimals);
+            return Launa_WC_Money::from_atomic($amount, $decimals);
         }
 
         return $amount;

@@ -39,8 +39,12 @@ docker run --rm \
   -e COMPOSER_HOME=/tmp/composer \
   -v "$ROOT:/app" \
   -w /app \
+  -e LAUNA_API_KEY="${LAUNA_API_KEY:-}" \
+  -e LAUNA_BASE_URL="${LAUNA_BASE_URL:-}" \
+  -e LAUNA_PAY_TO_ADDRESS="${LAUNA_PAY_TO_ADDRESS:-}" \
+  -e LAUNA_PAY_TO_HEDERA_ACCOUNT_ID="${LAUNA_PAY_TO_HEDERA_ACCOUNT_ID:-}" \
   -e AX402_API_KEY="${AX402_API_KEY:-}" \
-  -e AX402_BASE_URL="${AX402_BASE_URL:-https://api.ax402.io}" \
+  -e AX402_BASE_URL="${AX402_BASE_URL:-${LAUNA_BASE_URL:-https://api.launa.io}}" \
   -e AX402_PAY_TO_ADDRESS="${AX402_PAY_TO_ADDRESS:-}" \
   -e AX402_PAY_TO_HEDERA_ACCOUNT_ID="${AX402_PAY_TO_HEDERA_ACCOUNT_ID:-}" \
   composer:2 \

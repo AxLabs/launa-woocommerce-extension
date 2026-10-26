@@ -9,9 +9,9 @@ defined('ABSPATH') || exit;
  * Same key returns the recorded complete response with no new settlement
  * effects. Distinct complete attempts (challenge vs reconcile) use a fresh key.
  */
-final class Ax402_WC_Ucp_Complete_Idempotency
+final class Launa_WC_Ucp_Complete_Idempotency
 {
-    public const META = '_ax402_ucp_complete_idempotency';
+    public const META = '_launa_ucp_complete_idempotency';
     public const MAX_KEYS = 16;
     public const MAX_KEY_LENGTH = 256;
 

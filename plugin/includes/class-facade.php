@@ -4,12 +4,13 @@ declare(strict_types=1);
 defined('ABSPATH') || exit;
 
 /**
- * Optional WC-API facade that 302-redirects to the Ax402 gateway URL.
+ * Optional WC-API facade that 302-redirects to the Launa gateway URL.
  */
-final class Ax402_WC_Facade
+final class Launa_WC_Facade
 {
     public function register(): void
     {
+        add_action('woocommerce_api_launa_pay', [$this, 'redirect']);
         add_action('woocommerce_api_ax402_pay', [$this, 'redirect']);
     }
 
@@ -31,7 +32,7 @@ final class Ax402_WC_Facade
             exit;
         }
 
-        $gateway_url = (string) $order->get_meta(Ax402_WC_Order_Payment::META_GATEWAY_URL);
+        $gateway_url = (string) $order->get_meta(Launa_WC_Order_Payment::META_GATEWAY_URL);
         if ($gateway_url === '') {
             status_header(409);
             echo 'Payment URL not ready';
@@ -40,10 +41,10 @@ final class Ax402_WC_Facade
 
         $parts = wp_parse_url($gateway_url);
         $redirect_host = is_array($parts) ? (string) ($parts['host'] ?? '') : '';
-        $settings = Ax402_WC_Settings::all();
+        $settings = Launa_WC_Settings::all();
         if (
             $redirect_host === ''
-            || !Ax402_WC_Ucp_Gateway_Http::host_is_allowed(
+            || !Launa_WC_Ucp_Gateway_Http::host_is_allowed(
                 $redirect_host,
                 [
                     $settings['gateway_host'],

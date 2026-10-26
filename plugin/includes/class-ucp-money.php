@@ -9,7 +9,7 @@ defined('ABSPATH') || exit;
  * Human Woo prices may use 4+ decimals. UCP cannot represent $0.001 as a cent
  * without undercharging, so those SKUs are omitted from the UCP catalog.
  */
-final class Ax402_WC_Ucp_Money
+final class Launa_WC_Ucp_Money
 {
     public const CURRENCY = 'USD';
 

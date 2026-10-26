@@ -1,16 +1,16 @@
 <?php
 declare(strict_types=1);
 
-namespace Ax402\WC\Tests\Unit;
+namespace Launa\WC\Tests\Unit;
 
-use Ax402_WC_Ucp_Fulfillment;
+use Launa_WC_Ucp_Fulfillment;
 use PHPUnit\Framework\TestCase;
 
 final class UcpFulfillmentAddressTest extends TestCase
 {
     public function test_official_postal_fields_win(): void
     {
-        $dest = Ax402_WC_Ucp_Fulfillment::coerce_destination([
+        $dest = Launa_WC_Ucp_Fulfillment::coerce_destination([
             'street_address' => 'Bahnhofstrasse 1',
             'address_locality' => 'Zurich',
             'postal_code' => '8001',
@@ -24,7 +24,7 @@ final class UcpFulfillmentAddressTest extends TestCase
 
     public function test_common_agent_aliases_are_mapped(): void
     {
-        $dest = Ax402_WC_Ucp_Fulfillment::coerce_destination([
+        $dest = Launa_WC_Ucp_Fulfillment::coerce_destination([
             'address_line_1' => 'Mystrasse 111',
             'city' => 'Zurich',
             'zip' => '8003',
@@ -38,7 +38,7 @@ final class UcpFulfillmentAddressTest extends TestCase
 
     public function test_nested_address_object(): void
     {
-        $dest = Ax402_WC_Ucp_Fulfillment::coerce_destination([
+        $dest = Launa_WC_Ucp_Fulfillment::coerce_destination([
             'id' => 'home',
             'address' => [
                 'address_line1' => '1 Market St',

@@ -5,9 +5,9 @@ defined('ABSPATH') || exit;
 
 
 /**
- * Ax402 control-plane HTTP client (greenfield).
+ * Launa control-plane HTTP client (greenfield).
  */
-final class Ax402_WC_Control_Plane_Client
+final class Launa_WC_Control_Plane_Client
 {
     public function __construct(
         private string $base_url,
@@ -53,7 +53,7 @@ final class Ax402_WC_Control_Plane_Client
     }
 
     /**
-     * Ax402 (and CDNs) often return 4xx/5xx without `{ "error": "…" }` — e.g. plain
+     * Launa (and CDNs) often return 4xx/5xx without `{ "error": "…" }` — e.g. plain
      * `no available server` on HTTP 503. Surface status + a short body so admin
      * notices are not a generic "Request failed".
      *
@@ -363,7 +363,7 @@ final class Ax402_WC_Control_Plane_Client
     }
 
     /**
-     * Settlements recorded by Ax402 after on-chain payment verification.
+     * Settlements recorded by Launa after on-chain payment verification.
      *
      * @return list<array<string, mixed>>
      */
@@ -374,7 +374,7 @@ final class Ax402_WC_Control_Plane_Client
             throw new RuntimeException(esc_html('List settlements failed: ' . $result['error']));
         }
 
-        return Ax402_WC_Settlement_Reconcile::normalize_settlements_payload($result['data'] ?? null);
+        return Launa_WC_Settlement_Reconcile::normalize_settlements_payload($result['data'] ?? null);
     }
 
     /**

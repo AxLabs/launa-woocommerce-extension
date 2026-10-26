@@ -6,10 +6,10 @@ defined('ABSPATH') || exit;
 /**
  * Serves GET /.well-known/ucp (outside wp-json).
  */
-final class Ax402_WC_Ucp_Discovery
+final class Launa_WC_Ucp_Discovery
 {
-    public const QUERY_VAR = 'ax402_ucp_discovery';
-    public const REWRITE_FLAG = 'ax402_wc_ucp_rewrite';
+    public const QUERY_VAR = 'launa_ucp_discovery';
+    public const REWRITE_FLAG = 'launa_wc_ucp_rewrite';
 
     public function register(): void
     {
@@ -39,15 +39,15 @@ final class Ax402_WC_Ucp_Discovery
         header('Content-Type: application/json; charset=utf-8');
         header('Cache-Control: no-store');
 
-        if (!Ax402_WC_Settings::ucp_enabled()) {
+        if (!Launa_WC_Settings::ucp_enabled()) {
             status_header(404);
             echo wp_json_encode([
                 'ucp' => [
-                    'version' => Ax402_WC_Ucp_Profile_Builder::UCP_VERSION,
+                    'version' => Launa_WC_Ucp_Profile_Builder::UCP_VERSION,
                     'status' => 'error',
                 ],
                 'messages' => [
-                    Ax402_WC_Ucp_Response::message(
+                    Launa_WC_Ucp_Response::message(
                         'error',
                         'not_found',
                         'UCP is disabled on this store.',
@@ -58,7 +58,7 @@ final class Ax402_WC_Ucp_Discovery
             exit;
         }
 
-        $profile = Ax402_WC_Ucp_Profile_Builder::cached();
+        $profile = Launa_WC_Ucp_Profile_Builder::cached();
         status_header(200);
         echo wp_json_encode($profile);
         exit;

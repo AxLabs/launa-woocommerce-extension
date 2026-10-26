@@ -4,10 +4,10 @@ declare(strict_types=1);
 defined('ABSPATH') || exit;
 
 /**
- * Ensures one store Ax402 API exists. EVM and Hedera tokens share that API
+ * Ensures one store Launa API exists. EVM and Hedera tokens share that API
  * when pay_to_addresses maps each Hedera CAIP-2 network to a 0.0.x account.
  */
-final class Ax402_WC_Store_Onboarding
+final class Launa_WC_Store_Onboarding
 {
     public const FAMILY_EVM = 'evm';
     public const FAMILY_HEDERA = 'hedera';
@@ -15,25 +15,25 @@ final class Ax402_WC_Store_Onboarding
     /**
      * @return array{api_id:string,gateway_host:string,gateway_url:string,api:array<string,mixed>,family:string}
      */
-    public static function ensure_api(?Ax402_WC_Control_Plane_Client $client = null): array
+    public static function ensure_api(?Launa_WC_Control_Plane_Client $client = null): array
     {
-        $settings = Ax402_WC_Settings::all();
-        $client ??= Ax402_WC_Settings::client();
+        $settings = Launa_WC_Settings::all();
+        $client ??= Launa_WC_Settings::client();
         if ($client === null) {
-            throw new RuntimeException('Ax402 API key is not configured');
+            throw new RuntimeException('Launa API key is not configured');
         }
 
         $platform = $client->get_platform_config();
-        Ax402_WC_Platform_Config_Store::store($platform);
+        Launa_WC_Platform_Config_Store::store($platform);
         $recipients = self::recipient_config(
             $platform,
-            Ax402_WC_Settings::enabled_token_ids($platform),
+            Launa_WC_Settings::enabled_token_ids($platform),
             trim($settings['pay_to_address']),
             trim($settings['pay_to_hedera_account_id'])
         );
 
         if ($recipients['accepted_token_ids'] === []) {
-            throw new RuntimeException('No settlement tokens available to scope the Ax402 API');
+            throw new RuntimeException('No settlement tokens available to scope the Launa API');
         }
         if ($recipients['has_evm'] && $recipients['evm_pay_to'] === '') {
             throw new RuntimeException('EVM pay-to wallet address is required');
@@ -63,11 +63,11 @@ final class Ax402_WC_Store_Onboarding
                 if (stripos($e->getMessage(), 'api not found') === false) {
                     throw $e;
                 }
-                Ax402_WC_Settings::update([
+                Launa_WC_Settings::update([
                     'api_id' => '',
                     'gateway_host' => '',
                 ]);
-                $settings = Ax402_WC_Settings::all();
+                $settings = Launa_WC_Settings::all();
                 $api_slug = (string) $settings['api_slug'];
             }
         }
@@ -97,7 +97,7 @@ final class Ax402_WC_Store_Onboarding
 
         $host = self::primary_hostname($api, $slug, $platform, $settings['network_mode']);
 
-        Ax402_WC_Settings::update([
+        Launa_WC_Settings::update([
             'api_id' => (string) $api['id'],
             'api_slug' => $slug,
             'gateway_host' => $host,
@@ -110,7 +110,7 @@ final class Ax402_WC_Store_Onboarding
      * @deprecated Dual APIs are no longer required. Delegates to {@see ensure_api()}.
      * @return array{api_id:string,gateway_host:string,gateway_url:string,api:array<string,mixed>,family:string}
      */
-    public static function ensure_hedera_api(?Ax402_WC_Control_Plane_Client $client = null): array
+    public static function ensure_hedera_api(?Launa_WC_Control_Plane_Client $client = null): array
     {
         return self::ensure_api($client);
     }
@@ -121,7 +121,7 @@ final class Ax402_WC_Store_Onboarding
      */
     public static function ensure_api_for_network(
         string $network,
-        ?Ax402_WC_Control_Plane_Client $client = null
+        ?Launa_WC_Control_Plane_Client $client = null
     ): array {
         unset($network);
 
@@ -134,7 +134,7 @@ final class Ax402_WC_Store_Onboarding
      */
     public static function ensure_api_for_family(
         string $family,
-        ?Ax402_WC_Control_Plane_Client $client = null
+        ?Launa_WC_Control_Plane_Client $client = null
     ): array {
         unset($family);
 
@@ -168,12 +168,12 @@ final class Ax402_WC_Store_Onboarding
         $hedera_networks = [];
 
         foreach ($ids as $token_id) {
-            $token = Ax402_WC_Platform_Tokens::find_token_by_id($platform, $token_id);
+            $token = Launa_WC_Platform_Tokens::find_token_by_id($platform, $token_id);
             if ($token === null) {
                 continue;
             }
             $network = (string) ($token['network'] ?? '');
-            if (Ax402_WC_Platform_Tokens::is_hedera_network($network)) {
+            if (Launa_WC_Platform_Tokens::is_hedera_network($network)) {
                 $has_hedera = true;
                 if ($network !== '') {
                     $hedera_networks[$network] = true;
@@ -212,7 +212,7 @@ final class Ax402_WC_Store_Onboarding
     {
         $ids = [];
         foreach ($enabled_token_ids as $token_id) {
-            $token = Ax402_WC_Platform_Tokens::find_token_by_id($platform, $token_id);
+            $token = Launa_WC_Platform_Tokens::find_token_by_id($platform, $token_id);
             if ($token !== null && (string) ($token['id'] ?? '') !== '') {
                 $ids[] = (string) $token['id'];
             }
@@ -221,7 +221,7 @@ final class Ax402_WC_Store_Onboarding
             return array_values(array_unique($ids));
         }
 
-        foreach (Ax402_WC_Platform_Tokens::enabled_tokens($platform) as $token) {
+        foreach (Launa_WC_Platform_Tokens::enabled_tokens($platform) as $token) {
             $token_id = (string) ($token['id'] ?? '');
             if ($token_id !== '') {
                 $ids[] = $token_id;
@@ -246,11 +246,11 @@ final class Ax402_WC_Store_Onboarding
         $want_hedera = $family === self::FAMILY_HEDERA;
         $ids = [];
         foreach (self::accepted_token_ids($platform, $enabled_token_ids) as $token_id) {
-            $token = Ax402_WC_Platform_Tokens::find_token_by_id($platform, $token_id);
+            $token = Launa_WC_Platform_Tokens::find_token_by_id($platform, $token_id);
             if ($token === null) {
                 continue;
             }
-            $is_hedera = Ax402_WC_Platform_Tokens::is_hedera_network((string) ($token['network'] ?? ''));
+            $is_hedera = Launa_WC_Platform_Tokens::is_hedera_network((string) ($token['network'] ?? ''));
             if ($is_hedera === $want_hedera) {
                 $ids[] = $token_id;
             }
@@ -289,7 +289,7 @@ final class Ax402_WC_Store_Onboarding
      * @return array<string, mixed>
      */
     private static function sync_api(
-        Ax402_WC_Control_Plane_Client $client,
+        Launa_WC_Control_Plane_Client $client,
         array $api,
         array $recipients,
         string $upstream
@@ -315,16 +315,16 @@ final class Ax402_WC_Store_Onboarding
         array $api,
         string $host,
         array $platform,
-        Ax402_WC_Control_Plane_Client $client
+        Launa_WC_Control_Plane_Client $client
     ): array {
         $result = [
             'api_id' => (string) $api['id'],
             'gateway_host' => $host,
-            'gateway_url' => Ax402_WC_Platform_Tokens::gateway_base_url($host, $platform),
+            'gateway_url' => Launa_WC_Platform_Tokens::gateway_base_url($host, $platform),
             'api' => $api,
             'family' => self::FAMILY_EVM,
         ];
-        Ax402_WC_Gateway_Cors::ensure_store_origins($result['api_id'], $client);
+        Launa_WC_Gateway_Cors::ensure_store_origins($result['api_id'], $client);
 
         return $result;
     }
@@ -345,7 +345,7 @@ final class Ax402_WC_Store_Onboarding
      * @return array<string, mixed>
      */
     private static function sync_accepted_tokens(
-        Ax402_WC_Control_Plane_Client $client,
+        Launa_WC_Control_Plane_Client $client,
         array $api,
         array $token_ids
     ): array {
@@ -379,7 +379,7 @@ final class Ax402_WC_Store_Onboarding
      * @return array<string, mixed>
      */
     private static function sync_upstream(
-        Ax402_WC_Control_Plane_Client $client,
+        Launa_WC_Control_Plane_Client $client,
         array $api,
         string $upstream
     ): array {
@@ -405,7 +405,7 @@ final class Ax402_WC_Store_Onboarding
      * @return array<string, mixed>
      */
     private static function sync_pay_to(
-        Ax402_WC_Control_Plane_Client $client,
+        Launa_WC_Control_Plane_Client $client,
         array $api,
         string $pay_to,
         array $pay_to_addresses
@@ -460,7 +460,7 @@ final class Ax402_WC_Store_Onboarding
     /**
      * @return array<string, mixed>|null
      */
-    private static function find_api_by_slug(Ax402_WC_Control_Plane_Client $client, string $slug): ?array
+    private static function find_api_by_slug(Launa_WC_Control_Plane_Client $client, string $slug): ?array
     {
         foreach ($client->list_apis() as $api) {
             if (!is_array($api)) {
@@ -496,7 +496,7 @@ final class Ax402_WC_Store_Onboarding
             }
         }
 
-        $platform_domain = Ax402_WC_Platform_Tokens::preferred_platform_domain($platform, $network_mode);
+        $platform_domain = Launa_WC_Platform_Tokens::preferred_platform_domain($platform, $network_mode);
         return $slug . '.' . $platform_domain;
     }
 }

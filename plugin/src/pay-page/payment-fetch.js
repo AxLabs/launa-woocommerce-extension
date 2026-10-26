@@ -39,7 +39,7 @@ export function requestHasPaymentSignature( input, init ) {
 
 /**
  * Wrap `fetch` used by PaywallProvider. Calls `onPaymentSubmitted` the moment
- * a signed retry is sent (before Ax402 verify/settle returns).
+ * a signed retry is sent (before Launa verify/settle returns).
  *
  * @param {Function} [baseFetch]                Fetch implementation. Defaults to global fetch.
  * @param {Object}   [hooks]

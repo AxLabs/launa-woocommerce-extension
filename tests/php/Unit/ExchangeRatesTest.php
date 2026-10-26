@@ -1,20 +1,20 @@
 <?php
 declare(strict_types=1);
 
-namespace Ax402\WC\Tests\Unit;
+namespace Launa\WC\Tests\Unit;
 
-use Ax402_WC_Composite_Exchange_Rates;
-use Ax402_WC_Control_Plane_Client;
-use Ax402_WC_Control_Plane_Exchange_Rates;
-use Ax402_WC_Stablecoin_One_To_One_Rates;
-use Ax402_WC_Stub_Market_Rates;
+use Launa_WC_Composite_Exchange_Rates;
+use Launa_WC_Control_Plane_Client;
+use Launa_WC_Control_Plane_Exchange_Rates;
+use Launa_WC_Stablecoin_One_To_One_Rates;
+use Launa_WC_Stub_Market_Rates;
 use PHPUnit\Framework\TestCase;
 
 final class ExchangeRatesTest extends TestCase
 {
     public function test_stablecoin_one_to_one(): void
     {
-        $rates = new Ax402_WC_Stablecoin_One_To_One_Rates();
+        $rates = new Launa_WC_Stablecoin_One_To_One_Rates();
         $this->assertSame('1', $rates->rate_usd_to_token('USDC', 'eip155:8453'));
         $this->assertSame('1', $rates->rate_usd_to_token('usdt', 'eip155:845320402'));
         $this->assertNull($rates->rate_usd_to_token('xGAS', 'eip155:8453'));
@@ -22,23 +22,23 @@ final class ExchangeRatesTest extends TestCase
 
     public function test_stub_market_always_null(): void
     {
-        $rates = new Ax402_WC_Stub_Market_Rates();
+        $rates = new Launa_WC_Stub_Market_Rates();
         $this->assertNull($rates->rate_usd_to_token('xGAS', 'eip155:8453'));
         $this->assertNull($rates->rate_usd_to_token('USDC', 'eip155:8453'));
     }
 
     public function test_composite_default_without_client_uses_stub(): void
     {
-        $rates = Ax402_WC_Composite_Exchange_Rates::default();
+        $rates = Launa_WC_Composite_Exchange_Rates::default();
         $this->assertSame('1', $rates->rate_usd_to_token('USDC', 'eip155:8453'));
         $this->assertNull($rates->rate_usd_to_token('XGAS', 'eip155:12227332'));
     }
 
     public function test_tokens_per_usd_from_price(): void
     {
-        $this->assertSame('1', Ax402_WC_Control_Plane_Exchange_Rates::tokens_per_usd_from_price('1'));
-        $this->assertNull(Ax402_WC_Control_Plane_Exchange_Rates::tokens_per_usd_from_price('0'));
-        $tokens = Ax402_WC_Control_Plane_Exchange_Rates::tokens_per_usd_from_price('1.04796887214');
+        $this->assertSame('1', Launa_WC_Control_Plane_Exchange_Rates::tokens_per_usd_from_price('1'));
+        $this->assertNull(Launa_WC_Control_Plane_Exchange_Rates::tokens_per_usd_from_price('0'));
+        $tokens = Launa_WC_Control_Plane_Exchange_Rates::tokens_per_usd_from_price('1.04796887214');
         $this->assertNotNull($tokens);
         $this->assertEqualsWithDelta(1.0 / 1.04796887214, (float) $tokens, 1e-12);
     }
@@ -51,7 +51,7 @@ final class ExchangeRatesTest extends TestCase
             512,
             JSON_THROW_ON_ERROR
         );
-        $map = Ax402_WC_Control_Plane_Exchange_Rates::index_rates($payload);
+        $map = Launa_WC_Control_Plane_Exchange_Rates::index_rates($payload);
         $this->assertArrayHasKey('USDC|eip155:84532', $map);
         $this->assertArrayHasKey('XGAS|eip155:12227332', $map);
         $this->assertEqualsWithDelta(1.0 / 0.999890948663, (float) $map['USDC|eip155:84532'], 1e-9);
@@ -59,7 +59,7 @@ final class ExchangeRatesTest extends TestCase
 
     public function test_index_rates_handles_empty_payload(): void
     {
-        $this->assertSame([], Ax402_WC_Control_Plane_Exchange_Rates::index_rates([
+        $this->assertSame([], Launa_WC_Control_Plane_Exchange_Rates::index_rates([
             'quote' => 'usd',
             'rates' => [],
         ]));
@@ -67,7 +67,7 @@ final class ExchangeRatesTest extends TestCase
 
     public function test_control_plane_indexes_production_shaped_rates(): void
     {
-        $map = Ax402_WC_Control_Plane_Exchange_Rates::index_rates([
+        $map = Launa_WC_Control_Plane_Exchange_Rates::index_rates([
             'quote' => 'usd',
             'rates' => [
                 [
@@ -91,8 +91,8 @@ final class ExchangeRatesTest extends TestCase
     {
         $payload = (string) file_get_contents(dirname(__DIR__) . '/fixtures/exchange-rates.json');
         $urls = [];
-        $client = new Ax402_WC_Control_Plane_Client(
-            'https://api.staging.ax402.io',
+        $client = new Launa_WC_Control_Plane_Client(
+            'https://api.staging.launa.io',
             'test-key',
             static function (string $method, string $url, ?array $body) use ($payload, &$urls): array {
                 unset($body);
@@ -104,7 +104,7 @@ final class ExchangeRatesTest extends TestCase
         );
 
         $now = new \DateTimeImmutable('2026-08-03T12:00:00Z');
-        $rates = new Ax402_WC_Control_Plane_Exchange_Rates($client, false, $now);
+        $rates = new Launa_WC_Control_Plane_Exchange_Rates($client, false, $now);
         $xgas = $rates->rate_usd_to_token('XGAS', 'eip155:12227332');
         $this->assertNotNull($xgas);
         $this->assertEqualsWithDelta(1.0 / 1.04796887214, (float) $xgas, 1e-12);
@@ -113,7 +113,7 @@ final class ExchangeRatesTest extends TestCase
         $this->assertSame('2026-08-03', $rates->last_rate_date());
 
         // Stables still win via composite when client is wired.
-        $composite = Ax402_WC_Composite_Exchange_Rates::default($client);
+        $composite = Launa_WC_Composite_Exchange_Rates::default($client);
         $this->assertSame('1', $composite->rate_usd_to_token('USDC', 'eip155:84532'));
         $this->assertNotNull($composite->rate_usd_to_token('XGAS', 'eip155:12227332'));
     }
@@ -124,28 +124,28 @@ final class ExchangeRatesTest extends TestCase
         $monday = new \DateTimeImmutable('2026-08-03T15:00:00Z');
         $this->assertSame(
             ['2026-08-03', '2026-07-31'],
-            Ax402_WC_Control_Plane_Exchange_Rates::candidate_rate_dates($monday)
+            Launa_WC_Control_Plane_Exchange_Rates::candidate_rate_dates($monday)
         );
 
         // Tuesday: today → yesterday (Mon); business-day fallback equals yesterday.
         $tuesday = new \DateTimeImmutable('2026-08-04T15:00:00Z');
         $this->assertSame(
             ['2026-08-04', '2026-08-03'],
-            Ax402_WC_Control_Plane_Exchange_Rates::candidate_rate_dates($tuesday)
+            Launa_WC_Control_Plane_Exchange_Rates::candidate_rate_dates($tuesday)
         );
 
         // Saturday: skip weekend dates, use Friday only.
         $saturday = new \DateTimeImmutable('2026-08-01T15:00:00Z');
         $this->assertSame(
             ['2026-07-31'],
-            Ax402_WC_Control_Plane_Exchange_Rates::candidate_rate_dates($saturday)
+            Launa_WC_Control_Plane_Exchange_Rates::candidate_rate_dates($saturday)
         );
 
         // Sunday: skip weekend dates, use Friday only.
         $sunday = new \DateTimeImmutable('2026-08-02T15:00:00Z');
         $this->assertSame(
             ['2026-07-31'],
-            Ax402_WC_Control_Plane_Exchange_Rates::candidate_rate_dates($sunday)
+            Launa_WC_Control_Plane_Exchange_Rates::candidate_rate_dates($sunday)
         );
     }
 
@@ -170,8 +170,8 @@ final class ExchangeRatesTest extends TestCase
         ], JSON_THROW_ON_ERROR);
 
         $urls = [];
-        $client = new Ax402_WC_Control_Plane_Client(
-            'https://api.ax402.io',
+        $client = new Launa_WC_Control_Plane_Client(
+            'https://api.launa.io',
             'test-key',
             static function (string $method, string $url, ?array $body) use ($empty, $filled, &$urls): array {
                 unset($method, $body);
@@ -189,7 +189,7 @@ final class ExchangeRatesTest extends TestCase
 
         // Tuesday 2026-08-04 → try today, then yesterday (Monday).
         $now = new \DateTimeImmutable('2026-08-04T12:00:00Z');
-        $rates = new Ax402_WC_Control_Plane_Exchange_Rates($client, true, $now);
+        $rates = new Launa_WC_Control_Plane_Exchange_Rates($client, true, $now);
         $this->assertNotNull($rates->rate_usd_to_token('ZCHF', 'eip155:8453'));
         $this->assertNotNull($rates->rate_usd_to_token('XGAS', 'eip155:47763'));
         $this->assertCount(2, $urls);
@@ -208,8 +208,8 @@ final class ExchangeRatesTest extends TestCase
         ], JSON_THROW_ON_ERROR);
 
         $urls = [];
-        $client = new Ax402_WC_Control_Plane_Client(
-            'https://api.ax402.io',
+        $client = new Launa_WC_Control_Plane_Client(
+            'https://api.launa.io',
             'test-key',
             static function (string $method, string $url, ?array $body) use ($empty, $filled, &$urls): array {
                 unset($method, $body);
@@ -227,7 +227,7 @@ final class ExchangeRatesTest extends TestCase
 
         // Monday: today → Friday (Sunday skipped).
         $now = new \DateTimeImmutable('2026-08-03T12:00:00Z');
-        $rates = new Ax402_WC_Control_Plane_Exchange_Rates($client, true, $now);
+        $rates = new Launa_WC_Control_Plane_Exchange_Rates($client, true, $now);
         $this->assertSame('1', $rates->rate_usd_to_token('XGAS', 'eip155:47763'));
         $this->assertCount(2, $urls);
         $this->assertStringContainsString('date=2026-08-03', $urls[0]);

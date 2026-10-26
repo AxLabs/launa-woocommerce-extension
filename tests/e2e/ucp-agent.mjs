@@ -2,34 +2,36 @@
  * UCP agent E2E: discover → search → cart → checkout → 402 → pay gateway → complete again.
  *
  * Requires:
- * - UCP enabled (on after seed unless AX402_UCP_ENABLED=no)
- * - AX402_API_KEY, AX402_PAY_TO_ADDRESS
- * - AX402_EVM_PRIVATE_KEY
- * - WP_BASE_URL publicly reachable by the Ax402 gateway
+ * - UCP enabled (on after seed unless LAUNA_UCP_ENABLED=no; AX402_UCP_ENABLED still works)
+ * - LAUNA_API_KEY, LAUNA_PAY_TO_ADDRESS (AX402_* still works)
+ * - LAUNA_EVM_PRIVATE_KEY (AX402_EVM_PRIVATE_KEY still works)
+ * - WP_BASE_URL publicly reachable by the Launa gateway
  *
  * Optional:
- * - E2E_UCP_PHYSICAL=1  use ax402-ship-box + a US shipping address
+ * - E2E_UCP_PHYSICAL=1  use launa-ship-box + a US shipping address
  * - E2E_UCP_TRANSPORT=rest  pay via REST complete instead of MCP
  *
- * External-URL: pay payment_required.resource.url (Ax402 gateway) with standard
+ * External-URL: pay payment_required.resource.url (Launa gateway) with standard
  * x402, then POST complete again with no signature (fresh Idempotency-Key).
  * The shop must not replay PAYMENT-SIGNATURE. See docs/ucp.md.
  */
-import { buyerClientFromEnv } from '@ax402/sdk/buyer';
+import { buyerClientFromEnv } from '@launaio/sdk/buyer';
 
 const wpBase = (process.env.WP_BASE_URL || '').replace(/\/$/, '');
 const physical = process.env.E2E_UCP_PHYSICAL === '1';
 const transport = (process.env.E2E_UCP_TRANSPORT || 'mcp').toLowerCase();
-const agentProfile = 'https://ax402.example/e2e-agent';
+const agentProfile = 'https://launa.example/e2e-agent';
 let mcpSeq = 1;
 
-function requireEnv(name) {
-  const v = process.env[name];
-  if (!v) {
-    console.error(`Missing ${name}`);
-    process.exit(2);
+function requireEnv(...names) {
+  for (const name of names) {
+    const value = process.env[name];
+    if (value) {
+      return value;
+    }
   }
-  return v;
+  console.error(`Missing ${names.join(' or ')}`);
+  process.exit(2);
 }
 
 async function jsonFetch(url, init = {}) {
@@ -131,7 +133,13 @@ async function main() {
     console.error('WP_BASE_URL is required (must be public for gateway upstream)');
     process.exit(2);
   }
-  requireEnv('AX402_EVM_PRIVATE_KEY');
+  const buyerKey = requireEnv('LAUNA_EVM_PRIVATE_KEY', 'AX402_EVM_PRIVATE_KEY');
+  if (!process.env.LAUNA_EVM_PRIVATE_KEY) {
+    process.env.LAUNA_EVM_PRIVATE_KEY = buyerKey;
+  }
+  if (!process.env.AX402_EVM_PRIVATE_KEY) {
+    process.env.AX402_EVM_PRIVATE_KEY = buyerKey;
+  }
 
   const discovery = await jsonFetch(`${wpBase}/.well-known/ucp`);
   if (!discovery.res.ok) {
@@ -147,7 +155,7 @@ async function main() {
   }
   if (!discovery.body?.ucp?.capabilities?.['dev.ucp.shopping.cart']
     || !discovery.body?.ucp?.capabilities?.['dev.ucp.shopping.order']) {
-    throw new Error('discovery missing cart/order capabilities — save Ax402 settings to bust the profile cache');
+    throw new Error('discovery missing cart/order capabilities — save Launa settings to bust the profile cache');
   }
   const handler = discovery.body?.ucp?.payment_handlers?.['org.x402.payment'];
   if (!Array.isArray(handler) || !handler[0]?.x402) {
@@ -180,7 +188,7 @@ async function main() {
     }
   }
 
-  const skuHint = physical ? 'ax402-ship-box' : 'ax402-micropay';
+  const skuHint = physical ? 'launa-ship-box' : 'launa-micropay';
   let itemId = '';
   for (const product of products) {
     const variant = product.variants?.[0];
@@ -345,7 +353,7 @@ async function main() {
     const init = await mcpRpc(mcpEndpoint, 'initialize', {
       protocolVersion: '2025-03-26',
       capabilities: {},
-      clientInfo: { name: 'ax402-ucp-e2e', version: '0.2.0' },
+      clientInfo: { name: 'launa-ucp-e2e', version: '0.2.0' },
     });
     if (!init.body?.result?.serverInfo?.name) {
       throw new Error(`MCP initialize failed: ${JSON.stringify(init.body)}`);

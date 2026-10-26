@@ -4,17 +4,17 @@ declare(strict_types=1);
 defined('ABSPATH') || exit;
 
 /**
- * Keeps Ax402 gateway CORS origins in sync with this store's browser origins
+ * Keeps Launa gateway CORS origins in sync with this store's browser origins
  * so the pay page can call the gateway directly (no WordPress pay-proxy).
  */
-final class Ax402_WC_Gateway_Cors
+final class Launa_WC_Gateway_Cors
 {
-    public const OPTION_LAST_ORIGINS = 'ax402_wc_cors_origins';
-    public const OPTION_LAST_SYNC_AT = 'ax402_wc_cors_synced_at';
-    public const OPTION_LAST_ERROR = 'ax402_wc_cors_error';
+    public const OPTION_LAST_ORIGINS = 'launa_wc_cors_origins';
+    public const OPTION_LAST_SYNC_AT = 'launa_wc_cors_synced_at';
+    public const OPTION_LAST_ERROR = 'launa_wc_cors_error';
 
     /**
-     * Normalize a URL to an Ax402-allowed origin, or null if invalid.
+     * Normalize a URL to a Launa-allowed origin, or null if invalid.
      *
      * Valid: http(s)://FQDN|localhost|127.0.0.1|[::1] with optional port.
      * No path, query, fragment, wildcards, or credentials.
@@ -98,21 +98,21 @@ final class Ax402_WC_Gateway_Cors
     }
 
     /**
-     * Ensure store origins are present on the Ax402 API CORS list (idempotent adds).
+     * Ensure store origins are present on the Launa API CORS list (idempotent adds).
      *
      * @return array{ok:bool,origins:list<string>,added:list<string>,error:string}
      */
     public static function ensure_store_origins(
         string $api_id,
-        ?Ax402_WC_Control_Plane_Client $client = null
+        ?Launa_WC_Control_Plane_Client $client = null
     ): array {
-        $client ??= Ax402_WC_Settings::client();
+        $client ??= Launa_WC_Settings::client();
         if ($client === null) {
             return [
                 'ok' => false,
                 'origins' => [],
                 'added' => [],
-                'error' => 'Ax402 API client is not configured',
+                'error' => 'Launa API client is not configured',
             ];
         }
         if ($api_id === '') {
@@ -120,7 +120,7 @@ final class Ax402_WC_Gateway_Cors
                 'ok' => false,
                 'origins' => [],
                 'added' => [],
-                'error' => 'Missing Ax402 api_id',
+                'error' => 'Missing Launa api_id',
             ];
         }
 

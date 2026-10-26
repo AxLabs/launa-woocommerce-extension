@@ -6,9 +6,9 @@ defined('ABSPATH') || exit;
 /**
  * Distinguishes a UCP cart resource from a checkout session on the same Woo order.
  */
-final class Ax402_WC_Ucp_Kind
+final class Launa_WC_Ucp_Kind
 {
-    public const META = '_ax402_ucp_kind';
+    public const META = '_launa_ucp_kind';
     public const CART = 'cart';
     public const CHECKOUT = 'checkout';
 

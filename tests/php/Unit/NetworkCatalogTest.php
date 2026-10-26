@@ -1,22 +1,22 @@
 <?php
 declare(strict_types=1);
 
-namespace Ax402\WC\Tests\Unit;
+namespace Launa\WC\Tests\Unit;
 
-use Ax402_WC_Chain_Metadata;
-use Ax402_WC_Network_Catalog;
+use Launa_WC_Chain_Metadata;
+use Launa_WC_Network_Catalog;
 use PHPUnit\Framework\TestCase;
 
 final class NetworkCatalogTest extends TestCase
 {
     protected function setUp(): void
     {
-        Ax402_WC_Chain_Metadata::reset_cache_for_tests();
+        Launa_WC_Chain_Metadata::reset_cache_for_tests();
     }
 
     public function test_networks_from_supported_payload(): void
     {
-        $networks = Ax402_WC_Network_Catalog::networks_from_supported_payload([
+        $networks = Launa_WC_Network_Catalog::networks_from_supported_payload([
             'kinds' => [
                 ['scheme' => 'exact', 'network' => 'eip155:8453'],
                 ['scheme' => 'exact', 'network' => 'eip155:47763'],
@@ -28,7 +28,7 @@ final class NetworkCatalogTest extends TestCase
 
     public function test_chain_metadata_prefers_token_extra(): void
     {
-        $meta = Ax402_WC_Chain_Metadata::for_token([
+        $meta = Launa_WC_Chain_Metadata::for_token([
             'network' => 'eip155:999999',
             'extra' => [
                 'chainName' => 'Custom Chain',
@@ -43,7 +43,7 @@ final class NetworkCatalogTest extends TestCase
 
     public function test_metadata_from_chain_row_skips_templated_rpc(): void
     {
-        $meta = Ax402_WC_Chain_Metadata::metadata_from_chain_row([
+        $meta = Launa_WC_Chain_Metadata::metadata_from_chain_row([
             'chainId' => 8453,
             'name' => 'Base',
             'rpc' => [
@@ -59,7 +59,7 @@ final class NetworkCatalogTest extends TestCase
 
     public function test_chain_file_url_uses_github_contents_api(): void
     {
-        $url = Ax402_WC_Chain_Metadata::chain_file_url(8453);
+        $url = Launa_WC_Chain_Metadata::chain_file_url(8453);
         $this->assertSame(
             'https://api.github.com/repos/ethereum-lists/chains/contents/_data/chains/eip155-8453.json',
             $url
@@ -85,7 +85,7 @@ final class NetworkCatalogTest extends TestCase
                 ],
             ],
         ];
-        $catalog = Ax402_WC_Network_Catalog::from_platform($platform, [
+        $catalog = Launa_WC_Network_Catalog::from_platform($platform, [
             'kinds' => [
                 ['network' => 'eip155:8453'],
                 ['network' => 'eip155:47763'],

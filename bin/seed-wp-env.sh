@@ -30,8 +30,15 @@ SEED_GATEWAY_FILE="$ROOT/plugin/.seed-gateway.json"
 python3 - <<'PY' > "$SEED_GATEWAY_FILE"
 import json, os
 
-def yes_no(name, default):
-    raw = (os.environ.get(name) or "").strip().lower()
+def first_env(*names, default=""):
+    for name in names:
+        raw = os.environ.get(name)
+        if raw is not None and str(raw).strip() != "":
+            return str(raw).strip()
+    return default
+
+def yes_no(names, default):
+    raw = first_env(*names).lower()
     if raw in ("no", "0", "false", "off"):
         return "no"
     if raw in ("yes", "1", "true", "on"):
@@ -39,13 +46,13 @@ def yes_no(name, default):
     return default
 
 print(json.dumps({
-  "base_url": os.environ.get("AX402_BASE_URL") or "https://api.ax402.io",
-  "pay_to_address": os.environ.get("AX402_PAY_TO_ADDRESS") or "",
-  "pay_to_hedera_account_id": os.environ.get("AX402_PAY_TO_HEDERA_ACCOUNT_ID") or "",
-  "walletconnect_project_id": os.environ.get("AX402_WALLETCONNECT_PROJECT_ID") or "",
-  "network_mode": os.environ.get("AX402_NETWORK") or "sepolia",
-  "api_key": os.environ.get("AX402_API_KEY") or "",
-  "ucp_enabled": yes_no("AX402_UCP_ENABLED", "yes"),
+  "base_url": first_env("LAUNA_BASE_URL", "AX402_BASE_URL", default="https://api.launa.io"),
+  "pay_to_address": first_env("LAUNA_PAY_TO_ADDRESS", "AX402_PAY_TO_ADDRESS"),
+  "pay_to_hedera_account_id": first_env("LAUNA_PAY_TO_HEDERA_ACCOUNT_ID", "AX402_PAY_TO_HEDERA_ACCOUNT_ID"),
+  "walletconnect_project_id": first_env("LAUNA_WALLETCONNECT_PROJECT_ID", "AX402_WALLETCONNECT_PROJECT_ID"),
+  "network_mode": first_env("LAUNA_NETWORK", "AX402_NETWORK", default="sepolia"),
+  "api_key": first_env("LAUNA_API_KEY", "AX402_API_KEY"),
+  "ucp_enabled": yes_no(("LAUNA_UCP_ENABLED", "AX402_UCP_ENABLED"), "yes"),
 }))
 PY
 trap 'rm -f "$SEED_GATEWAY_FILE"' EXIT
@@ -60,15 +67,15 @@ if (!is_array($incoming)) {
 
 $gateway = [
   "enabled" => "yes",
-  "title" => "Pay with Ax402",
-  "description" => "Pay with a wallet token via Ax402",
-  "base_url" => (string) ($incoming["base_url"] ?? "https://api.ax402.io"),
+  "title" => "Pay with Launa",
+  "description" => "Pay with a wallet token via Launa",
+  "base_url" => (string) ($incoming["base_url"] ?? "https://api.launa.io"),
   "pay_to_address" => (string) ($incoming["pay_to_address"] ?? ""),
   "pay_to_hedera_account_id" => (string) ($incoming["pay_to_hedera_account_id"] ?? ""),
   "walletconnect_project_id" => (string) ($incoming["walletconnect_project_id"] ?? ""),
   "network_mode" => (string) ($incoming["network_mode"] ?? "sepolia"),
 ];
-$current = get_option("woocommerce_ax402_settings", []);
+$current = get_option("woocommerce_launa_settings", []);
 if (!is_array($current)) {
   $current = [];
 }
@@ -78,9 +85,9 @@ foreach (["base_url", "pay_to_address", "pay_to_hedera_account_id", "walletconne
     $gateway[$key] = (string) $current[$key];
   }
 }
-update_option("woocommerce_ax402_settings", array_merge($current, $gateway));
+update_option("woocommerce_launa_settings", array_merge($current, $gateway));
 
-if (class_exists("Ax402_WC_Settings")) {
+if (class_exists("Launa_WC_Settings")) {
   $plugin_update = [
     "base_url" => $gateway["base_url"],
     "network_mode" => $gateway["network_mode"],
@@ -99,16 +106,16 @@ if (class_exists("Ax402_WC_Settings")) {
     $plugin_update["api_key"] = $api_key;
   }
   $plugin_update["ucp_enabled"] = $gateway["ucp_enabled"];
-  Ax402_WC_Settings::update($plugin_update);
+  Launa_WC_Settings::update($plugin_update);
 }
 
-$available = (new Ax402_WC_Gateway_Ax402())->is_available() ? "yes" : "no";
+$available = (new Launa_WC_Gateway_Launa())->is_available() ? "yes" : "no";
 echo "gateway settings saved; is_available={$available}\n";
 '
 
 # Demo catalog with images (idempotent by SKU).
 npx wp-env run cli wp eval '
-function ax402_seed_attach_image(string $absolute_path, string $title): int {
+function launa_seed_attach_image(string $absolute_path, string $title): int {
   if (!is_readable($absolute_path)) {
     echo "missing image: {$absolute_path}\n";
     return 0;
@@ -156,7 +163,7 @@ function ax402_seed_attach_image(string $absolute_path, string $title): int {
   return (int) $id;
 }
 
-function ax402_seed_product(array $p): void {
+function launa_seed_product(array $p): void {
   $existing = get_posts([
     "post_type" => "product",
     "post_status" => "any",
@@ -185,12 +192,12 @@ function ax402_seed_product(array $p): void {
 
   // Sideload when missing. Do not re-copy when the file is already on disk —
   // media_handle_sideload used to delete tracked plugin PNGs if tmp_name pointed
-  // at those assets (copy-first in ax402_seed_attach_image avoids that).
+  // at those assets (copy-first in launa_seed_attach_image avoids that).
   $current_image_id = (int) $product->get_image_id();
   $current_file = $current_image_id > 0 ? (string) get_attached_file($current_image_id) : "";
   $need_image = !empty($p["image"]) && ($current_image_id <= 0 || $current_file === "" || !file_exists($current_file));
   if ($need_image) {
-    $image_id = ax402_seed_attach_image($p["image"], $p["name"]);
+    $image_id = launa_seed_attach_image($p["image"], $p["name"]);
     if ($image_id > 0) {
       $product->set_image_id($image_id);
     }
@@ -203,28 +210,28 @@ function ax402_seed_product(array $p): void {
 $base = WP_CONTENT_DIR . "/plugins/plugin/assets/demo-products";
 $products = [
   [
-    "sku" => "ax402-micropay",
-    "name" => "Ax402 E2E Micropay",
+    "sku" => "launa-micropay",
+    "name" => "Launa E2E Micropay",
     "price" => "0.01",
     "virtual" => true,
     "downloadable" => false,
     "short" => "Tiny USD checkout demo item.",
-    "description" => "A one-cent demo product for Ax402 wallet and agent checkout tests.",
+    "description" => "A one-cent demo product for Launa wallet and agent checkout tests.",
     "image" => $base . "/demo-product-chip.png",
   ],
   [
-    "sku" => "ax402-spark",
-    "name" => "Ax402 Spark Note",
+    "sku" => "launa-spark",
+    "name" => "Launa Spark Note",
     "price" => "0.02",
     "virtual" => true,
     "downloadable" => true,
     "short" => "Two-cent virtual note.",
-    "description" => "A lightweight digital note used to demo Ax402 payments at \$0.02.",
+    "description" => "A lightweight digital note used to demo Launa payments at \$0.02.",
     "image" => $base . "/demo-product-notebook.png",
   ],
   [
-    "sku" => "ax402-signal",
-    "name" => "Ax402 Signal Pulse",
+    "sku" => "launa-signal",
+    "name" => "Launa Signal Pulse",
     "price" => "0.001",
     "virtual" => true,
     "downloadable" => false,
@@ -233,8 +240,8 @@ $products = [
     "image" => $base . "/demo-product-token.png",
   ],
   [
-    "sku" => "ax402-dust",
-    "name" => "Ax402 Dust Credit",
+    "sku" => "launa-dust",
+    "name" => "Launa Dust Credit",
     "price" => "0.0003",
     "virtual" => true,
     "downloadable" => false,
@@ -243,8 +250,8 @@ $products = [
     "image" => $base . "/demo-product-guide.png",
   ],
   [
-    "sku" => "ax402-pass",
-    "name" => "Ax402 Access Pass",
+    "sku" => "launa-pass",
+    "name" => "Launa Access Pass",
     "price" => "0.10",
     "virtual" => true,
     "downloadable" => false,
@@ -253,8 +260,8 @@ $products = [
     "image" => $base . "/demo-product-pass.png",
   ],
   [
-    "sku" => "ax402-pack",
-    "name" => "Ax402 Starter Pack",
+    "sku" => "launa-pack",
+    "name" => "Launa Starter Pack",
     "price" => "0.25",
     "virtual" => true,
     "downloadable" => true,
@@ -263,8 +270,8 @@ $products = [
     "image" => $base . "/demo-product-pack.png",
   ],
   [
-    "sku" => "ax402-ship-box",
-    "name" => "Ax402 Ship Box",
+    "sku" => "launa-ship-box",
+    "name" => "Launa Ship Box",
     "price" => "0.10",
     "virtual" => false,
     "downloadable" => false,
@@ -275,7 +282,7 @@ $products = [
 ];
 
 foreach ($products as $product) {
-  ax402_seed_product($product);
+  launa_seed_product($product);
 }
 
 update_option("woocommerce_calc_shipping", "yes");
@@ -283,14 +290,14 @@ update_option("woocommerce_ship_to_countries", "all");
 if (class_exists("WC_Shipping_Zone") && class_exists("WC_Shipping_Zones")) {
   $zone_id = 0;
   foreach (WC_Shipping_Zones::get_zones() as $existing_zone) {
-    if (($existing_zone["zone_name"] ?? "") === "Ax402 UCP E2E") {
+    if (($existing_zone["zone_name"] ?? "") === "Launa UCP E2E") {
       $zone_id = (int) ($existing_zone["zone_id"] ?? $existing_zone["id"] ?? 0);
       break;
     }
   }
   if ($zone_id <= 0) {
     $zone = new WC_Shipping_Zone();
-    $zone->set_zone_name("Ax402 UCP E2E");
+    $zone->set_zone_name("Launa UCP E2E");
     $zone->save();
     $zone->add_location("US", "country");
     $instance_id = $zone->add_shipping_method("flat_rate");
@@ -303,9 +310,9 @@ if (class_exists("WC_Shipping_Zone") && class_exists("WC_Shipping_Zones")) {
     $current_method["cost"] = "0.05";
     $current_method["tax_status"] = "taxable";
     update_option($option_key, $current_method);
-    echo "seeded shipping zone Ax402 UCP E2E flat_rate={$instance_id}\n";
+    echo "seeded shipping zone Launa UCP E2E flat_rate={$instance_id}\n";
   } else {
-    echo "exists shipping zone Ax402 UCP E2E id={$zone_id}\n";
+    echo "exists shipping zone Launa UCP E2E id={$zone_id}\n";
   }
 }
 

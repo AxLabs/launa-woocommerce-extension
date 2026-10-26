@@ -6,8 +6,8 @@ Frontend assets in `build/` are produced from npm dependencies. Direct runtime d
 
 | Package | License |
 | --- | --- |
-| `@ax402/react-paywall` | Apache-2.0 |
-| `@ax402/sdk` | Apache-2.0 |
+| `@launaio/react-paywall` | Apache-2.0 |
+| `@launaio/sdk` | Apache-2.0 |
 | `@hashgraph/hedera-wallet-connect` | Apache-2.0 |
 | `@hashgraph/proto` | Apache-2.0 |
 | `@walletconnect/modal` | Apache-2.0 |
@@ -24,4 +24,4 @@ Transitive packages pulled into the pay-page bundle (Hedera / WalletConnect / pr
 
 Source for the frontend stack and build instructions:
 
-https://github.com/AxLabs/ax402-woocommerce-extension
+https://github.com/AxLabs/launa-woocommerce-extension
