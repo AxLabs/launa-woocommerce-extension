@@ -1,6 +1,6 @@
 {
   "name": "launa-woocommerce-extension",
-  "version": "0.5.1",
+  "version": "0.5.2",
   "private": true,
   "description": "Monorepo for the Launa WooCommerce extension",
   "scripts": {
