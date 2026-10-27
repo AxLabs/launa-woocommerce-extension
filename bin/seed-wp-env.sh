@@ -11,6 +11,7 @@ if [[ -f "$ROOT/.env" ]]; then
   set +a
 fi
 
+npx wp-env run cli wp option update blogname Launa
 npx wp-env run cli wp option update woocommerce_currency USD
 npx wp-env run cli wp option update woocommerce_default_country US:CA
 # Sub-cent demo SKUs need more than WooCommerce's default 2 decimals.
@@ -21,6 +22,8 @@ npx wp-env run cli wp option update woocommerce_coming_soon no
 npx wp-env run cli wp plugin activate woocommerce.latest-stable || \
   npx wp-env run cli wp plugin activate woocommerce || true
 npx wp-env run cli wp plugin activate plugin || true
+# Pretty REST URLs (/wp-json/...) need a root .htaccess. A fresh core has none.
+npx wp-env run cli wp rewrite structure '/%postname%/' --hard || true
 # Pinned WC zip bumps leave the store on the previous schema until this runs.
 npx wp-env run cli wp wc update --user=1 || true
 
@@ -280,6 +283,24 @@ $products = [
     "image" => $base . "/demo-product-pack.png",
   ],
 ];
+
+$keep_skus = [];
+foreach ($products as $product) {
+  $keep_skus[] = $product["sku"];
+}
+$existing_products = wc_get_products([
+  "limit" => -1,
+  "status" => ["publish", "draft", "private", "pending"],
+]);
+foreach ($existing_products as $existing_product) {
+  $sku = (string) $existing_product->get_sku();
+  if (in_array($sku, $keep_skus, true)) {
+    continue;
+  }
+  $removed_name = $existing_product->get_name();
+  $existing_product->delete(true);
+  echo "removed stale product sku={$sku} name={$removed_name}\n";
+}
 
 foreach ($products as $product) {
   launa_seed_product($product);

@@ -88,4 +88,41 @@ final class StoreOnboardingTest extends TestCase
             $config['pay_to_addresses']
         );
     }
+
+    public function test_saved_gateway_host_follows_api_primary_domain(): void
+    {
+        $host = Launa_WC_Store_Onboarding::current_gateway_host(
+            [
+                'domains' => [
+                    ['hostname' => 'shop.launa.dev', 'is_primary' => true],
+                ],
+            ],
+            'shop.x.ax402.io',
+            'shop',
+            ['platform_domain' => 'launa.dev'],
+            'mainnet'
+        );
+
+        $this->assertSame('shop.launa.dev', $host);
+    }
+
+    public function test_saved_gateway_host_stays_when_api_has_no_domain(): void
+    {
+        $host = Launa_WC_Store_Onboarding::current_gateway_host(
+            ['domains' => []],
+            'shop.example',
+            'shop',
+            ['platform_domain' => 'launa.dev'],
+            'mainnet'
+        );
+
+        $this->assertSame('shop.example', $host);
+    }
+
+    public function test_repo_folder_is_not_used_as_the_launa_api_name(): void
+    {
+        $this->assertSame('Launa', Launa_WC_Store_Onboarding::store_api_name('ax402-woocommerce-extension'));
+        $this->assertSame('Launa', Launa_WC_Store_Onboarding::store_api_name('  '));
+        $this->assertSame('Northwind Goods', Launa_WC_Store_Onboarding::store_api_name('Northwind Goods'));
+    }
 }

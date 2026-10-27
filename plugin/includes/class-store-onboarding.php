@@ -54,9 +54,16 @@ final class Launa_WC_Store_Onboarding
             try {
                 $api = $client->get_api($api_id);
                 $api = self::sync_api($client, $api, $recipients, $upstream);
-                $host = $gateway_host !== ''
-                    ? $gateway_host
-                    : self::primary_hostname($api, $api_slug, $platform, $settings['network_mode']);
+                $host = self::current_gateway_host(
+                    $api,
+                    $gateway_host,
+                    $api_slug,
+                    $platform,
+                    $settings['network_mode']
+                );
+                if ($host !== $gateway_host) {
+                    Launa_WC_Settings::update(['gateway_host' => $host]);
+                }
 
                 return self::onboarded_result($api, $host, $platform, $client);
             } catch (RuntimeException $e) {
@@ -303,8 +310,9 @@ final class Launa_WC_Store_Onboarding
             $recipients['pay_to_addresses']
         );
         $api = self::sync_accepted_tokens($client, $api, $recipients['accepted_token_ids']);
+        $api = self::sync_upstream($client, $api, $upstream);
 
-        return self::sync_upstream($client, $api, $upstream);
+        return self::sync_name($client, $api);
     }
 
     /**
@@ -334,9 +342,45 @@ final class Launa_WC_Store_Onboarding
         return 'wc-' . substr(hash('sha256', home_url()), 0, 10);
     }
 
+    /**
+     * Name shown for this store's API in Launa.
+     * wp-env labels a fresh site with the repo folder, which is not a store name.
+     */
+    public static function store_api_name(string $blog_name): string
+    {
+        $name = trim($blog_name);
+        if ($name === '' || strcasecmp($name, 'ax402-woocommerce-extension') === 0) {
+            return 'Launa';
+        }
+
+        return $name;
+    }
+
     private static function api_display_name(): string
     {
-        return get_bloginfo('name') ?: 'WooCommerce Store';
+        return self::store_api_name((string) get_bloginfo('name'));
+    }
+
+    /**
+     * @param array<string, mixed> $api
+     * @return array<string, mixed>
+     */
+    private static function sync_name(
+        Launa_WC_Control_Plane_Client $client,
+        array $api
+    ): array {
+        $api_id = (string) ($api['id'] ?? '');
+        $wanted = self::api_display_name();
+        if ($api_id === '' || $wanted === '') {
+            return $api;
+        }
+        if (trim((string) ($api['name'] ?? '')) === $wanted) {
+            return $api;
+        }
+
+        return $client->update_api($api_id, [
+            'name' => $wanted,
+        ]);
     }
 
     /**
@@ -498,5 +542,31 @@ final class Launa_WC_Store_Onboarding
 
         $platform_domain = Launa_WC_Platform_Tokens::preferred_platform_domain($platform, $network_mode);
         return $slug . '.' . $platform_domain;
+    }
+
+    /**
+     * Follow the API's hostname when the control plane returns one.
+     * A saved host is only a fallback for APIs that have no domain yet.
+     *
+     * @param array<string, mixed> $api
+     * @param array<string, mixed> $platform
+     */
+    public static function current_gateway_host(
+        array $api,
+        string $stored_host,
+        string $slug,
+        array $platform,
+        string $network_mode
+    ): string {
+        $domains = is_array($api['domains'] ?? null) ? $api['domains'] : [];
+        foreach ($domains as $domain) {
+            if (is_array($domain) && !empty($domain['hostname'])) {
+                return self::primary_hostname($api, $slug, $platform, $network_mode);
+            }
+        }
+
+        return $stored_host !== ''
+            ? $stored_host
+            : self::primary_hostname($api, $slug, $platform, $network_mode);
     }
 }

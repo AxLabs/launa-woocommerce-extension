@@ -23,11 +23,63 @@ final class Launa_WC_Upgrade
         }
 
         self::copy_options();
-        self::migrate_payment_methods();
         self::rename_meta_keys();
         self::migrate_cron();
+        self::finish_order_migration();
+    }
+
+    /**
+     * Rewrite historical orders from payment method ax402 to launa.
+     *
+     * Safe to call from plugins_loaded: the order query waits until WooCommerce
+     * has created WC()->order_factory. Querying earlier fatals under HPOS,
+     * because OrdersTableDataStore calls get_orders() on a null factory.
+     */
+    public static function finish_order_migration(): void
+    {
+        if (!function_exists('get_option') || !function_exists('update_option')) {
+            return;
+        }
+        if (get_option(self::FLAG) === '1') {
+            return;
+        }
+        if (!self::order_factory_is_ready(self::current_order_factory())) {
+            self::schedule_order_migration();
+            return;
+        }
+        if (!self::migrate_payment_methods()) {
+            return;
+        }
 
         update_option(self::FLAG, '1', false);
+    }
+
+    public static function order_factory_is_ready(?object $order_factory): bool
+    {
+        return $order_factory !== null && function_exists('wc_get_orders');
+    }
+
+    private static function current_order_factory(): ?object
+    {
+        if (!function_exists('WC')) {
+            return null;
+        }
+        $wc = WC();
+        if (!is_object($wc) || !isset($wc->order_factory) || !is_object($wc->order_factory)) {
+            return null;
+        }
+
+        return $wc->order_factory;
+    }
+
+    private static function schedule_order_migration(): void
+    {
+        static $scheduled = false;
+        if ($scheduled || !function_exists('add_action')) {
+            return;
+        }
+        $scheduled = true;
+        add_action('woocommerce_init', [self::class, 'finish_order_migration'], 20);
     }
 
     private static function copy_options(): void
@@ -64,10 +116,10 @@ final class Launa_WC_Upgrade
         delete_option($from);
     }
 
-    private static function migrate_payment_methods(): void
+    private static function migrate_payment_methods(): bool
     {
         if (!function_exists('wc_get_orders')) {
-            return;
+            return false;
         }
 
         $statuses = ['any', 'trash'];
@@ -76,29 +128,35 @@ final class Launa_WC_Upgrade
         }
 
         $guard = 0;
-        do {
-            $orders = wc_get_orders([
-                'payment_method' => 'ax402',
-                'limit' => 50,
-                'status' => $statuses,
-                'return' => 'objects',
-            ]);
-            if (!is_array($orders) || $orders === []) {
-                break;
-            }
-            foreach ($orders as $order) {
-                if (!$order instanceof WC_Order) {
-                    continue;
+        try {
+            do {
+                $orders = wc_get_orders([
+                    'payment_method' => 'ax402',
+                    'limit' => 50,
+                    'status' => $statuses,
+                    'return' => 'objects',
+                ]);
+                if (!is_array($orders) || $orders === []) {
+                    break;
                 }
-                $order->set_payment_method('launa');
-                $title = (string) $order->get_payment_method_title();
-                if ($title === '' || stripos($title, 'ax402') !== false) {
-                    $order->set_payment_method_title('Pay with Launa');
+                foreach ($orders as $order) {
+                    if (!$order instanceof WC_Order) {
+                        continue;
+                    }
+                    $order->set_payment_method('launa');
+                    $title = (string) $order->get_payment_method_title();
+                    if ($title === '' || stripos($title, 'ax402') !== false) {
+                        $order->set_payment_method_title('Pay with Launa');
+                    }
+                    $order->save();
                 }
-                $order->save();
-            }
-            $guard++;
-        } while ($guard < 200);
+                $guard++;
+            } while ($guard < 200);
+        } catch (Throwable) {
+            return false;
+        }
+
+        return true;
     }
 
     private static function rename_meta_keys(): void

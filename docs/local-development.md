@@ -63,7 +63,7 @@ npm run env:start
 
 What this does ([`.wp-env.json`](../.wp-env.json)):
 
-1. Starts WordPress (PHP 8.2) in Docker
+1. Starts **WordPress 7.1.3** (PHP 8.2) in Docker
 2. Installs **WooCommerce 11.1.0** (pinned for the E2E target) + mounts [`plugin/`](../plugin/) as a plugin
 3. Runs **`afterStart` → `bash bin/seed-wp-env.sh`** automatically
 
@@ -105,6 +105,7 @@ npm run build
 
 ### Store options
 
+- Site title → **Launa** (wp-env otherwise uses the repo folder name)
 - Currency → **USD**
 - Default country → **US:CA**
 - Price decimals → **4** (so `$0.001` / `$0.0003` display correctly)
@@ -131,7 +132,7 @@ Images live in [`plugin/assets/demo-products/`](../plugin/assets/demo-products/)
 | `launa-pass` | Launa Access Pass | $0.10 |
 | `launa-pack` | Launa Starter Pack | $0.25 |
 
-Re-running seed updates names/prices/images for existing SKUs and creates any missing ones.
+Re-running seed updates names/prices/images for existing SKUs, creates any missing ones, and deletes products whose SKU is not in the Launa catalog (including the old Ax402 demo SKUs).
 
 ---
 

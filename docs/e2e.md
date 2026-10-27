@@ -11,8 +11,8 @@ Product context: [context.md](context.md). Day-to-day local setup: [local-develo
 | Check | Expected |
 |---|---|
 | `wp-env` running | http://localhost:8888 responds |
-| Stack versions | WordPress **7.0.x**, WooCommerce **11.1.x** (pinned in [`.wp-env.json`](../.wp-env.json); refresh with `npm run env:update`) |
-| Seed applied | 6 demo products, Launa enabled, coming-soon **off** |
+| Stack versions | WordPress **7.1.3**, WooCommerce **11.1.0** (pinned in [`.wp-env.json`](../.wp-env.json); refresh with `npm run env:update`) |
+| Seed applied | Site title **Launa**, Launa demo catalog only, Launa enabled, coming-soon **off** |
 | Gateway | `is_available=yes` (API key + EVM and/or Hedera pay-to from settings / `.env`) |
 | Public origin | `WP_BASE_URL` / `WP_HOME` = HTTPS tunnel (required for live settle) |
 | Launa upstream | Store API `upstream_base_url` matches that same HTTPS origin |
