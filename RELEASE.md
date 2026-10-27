@@ -71,7 +71,7 @@ Write PR titles and commit messages as if they *are* the changelog. After the Re
 
 ```bash
 npm run package
-# → dist/ax402-for-woocommerce-<version>.zip
+# → dist/launa-for-woocommerce-<version>.zip
 ```
 
 The zip is the installable WordPress plugin (built JS included; `node_modules` / `src` excluded). See `bin/package-plugin.sh`.
@@ -116,7 +116,7 @@ On `push` of tags `v*.*.*` (GitHub-hosted Ubuntu, so `gh` is available) it will:
 1. `bash bin/check-version.sh <tag>`
 2. Install deps, `npm run package`
 3. WordPress [Plugin Check](https://wordpress.org/plugins/plugin-check/) on that zip (stable checks; **errors** fail the job and skip creating the GitHub Release; **warnings** are annotated but do not fail)
-4. `gh release create` (or upload/edit if the release already exists) with `dist/ax402-for-woocommerce-<version>.zip` attached. **Release notes are generated from git history**, not copied from `readme.txt`.
+4. `gh release create` (or upload/edit if the release already exists) with `dist/launa-for-woocommerce-<version>.zip` attached. **Release notes are generated from git history**, not copied from `readme.txt`.
 
 Inspect: **GitHub → Releases** (or `gh release view v0.2.0`).
 
@@ -161,7 +161,7 @@ Copy the **packaged zip**, not the git `plugin/` directory:
 
 ```bash
 npm run package
-# → dist/ax402-for-woocommerce-<version>.zip
+# → dist/launa-for-woocommerce-<version>.zip
 # zip root is ax402-for-woocommerce/ … unzip *contents* into SVN trunk/
 ```
 
@@ -187,7 +187,7 @@ bash bin/check-version.sh 0.4.3
 npm run package
 
 STAGE=$(mktemp -d)
-unzip -q dist/ax402-for-woocommerce-0.4.3.zip -d "$STAGE"
+unzip -q dist/launa-for-woocommerce-0.4.3.zip -d "$STAGE"
 # --delete is safe: SVN 1.7+ stores .svn at the working-copy root, not under trunk/
 rsync -a --delete "$STAGE/ax402-for-woocommerce/" ~/svn/ax402-for-woocommerce/trunk/
 rm -rf "$STAGE"
@@ -294,7 +294,7 @@ bash bin/check-version.sh v0.2.0
 npm ci && npm --prefix plugin ci
 npm run package
 npm run plugin-check   # needs wp-env; skip only if Actions is down and you already ran Plugin Check
-gh release create v0.2.0 "dist/ax402-for-woocommerce-0.2.0.zip" \
+gh release create v0.2.0 "dist/launa-for-woocommerce-0.2.0.zip" \
   --title "v0.2.0" \
   --generate-notes \
   --verify-tag

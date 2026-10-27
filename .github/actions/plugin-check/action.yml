@@ -9,7 +9,7 @@ runs:
       run: |
         set -euo pipefail
         VERSION="$(node -p "require('./plugin/package.json').version")"
-        ZIP="dist/ax402-for-woocommerce-${VERSION}.zip"
+        ZIP="dist/launa-for-woocommerce-${VERSION}.zip"
         if [[ ! -f "$ZIP" ]]; then
           echo "Missing $ZIP — run npm run package first." >&2
           exit 1

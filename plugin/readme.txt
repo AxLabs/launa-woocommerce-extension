@@ -214,10 +214,8 @@ WordPress.org SVN is a **publish snapshot** of tagged releases for the Plugin Di
 
 Minified frontend assets live in `build/`. Readable source, build tooling, and third-party license notes are in the GitHub repo. See also `assets/THIRD_PARTY_LICENSES.md` in the plugin package.
 
-```
-npm --prefix plugin ci
-npm --prefix plugin run build
-# Optional lean EVM-only bundle (stubs Hedera): LAUNA_EVM_ONLY=1 npm --prefix plugin run build
-```
+    npm --prefix plugin ci
+    npm --prefix plugin run build
+    # Optional lean EVM-only bundle (stubs Hedera): LAUNA_EVM_ONLY=1 npm --prefix plugin run build
 
 The default build includes Hedera WalletConnect support (~2MB pay-page bundle).

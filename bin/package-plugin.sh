@@ -20,8 +20,10 @@ for path in Path("plugin/build").glob("*.asset.php"):
 PY
 
 VERSION=$(node -p "require('./plugin/package.json').version")
+# Installed folder must match the WordPress.org slug. The zip download name does not.
 SLUG="ax402-for-woocommerce"
-OUT="dist/${SLUG}-${VERSION}.zip"
+ZIP_NAME="launa-for-woocommerce"
+OUT="dist/${ZIP_NAME}-${VERSION}.zip"
 STAGE="$(mktemp -d)"
 trap 'rm -rf "$STAGE"' EXIT
 
