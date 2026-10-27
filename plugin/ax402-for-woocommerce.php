@@ -3,7 +3,7 @@
  * Plugin Name: Launa for WooCommerce
  * Plugin URI: https://launa.io
  * Description: Accept x402 / Launa stablecoin payments in WooCommerce for humans and agents.
- * Version: 0.5.0
+ * Version: 0.5.1
  * Author: AxLabs
  * Author URI: https://axlabs.com
  * Developer: AxLabs
@@ -23,7 +23,7 @@ declare(strict_types=1);
 
 defined('ABSPATH') || exit;
 
-define('LAUNA_WC_VERSION', '0.5.0');
+define('LAUNA_WC_VERSION', '0.5.1');
 define('LAUNA_WC_PLUGIN_FILE', __FILE__);
 define('LAUNA_WC_PLUGIN_DIR', plugin_dir_path(__FILE__));
 define('LAUNA_WC_PLUGIN_URL', plugin_dir_url(__FILE__));

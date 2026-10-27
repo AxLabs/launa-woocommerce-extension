@@ -4,7 +4,7 @@ Tags: woocommerce, x402, payments, crypto, agents
 Requires at least: 6.0
 Tested up to: 7.1
 Requires PHP: 8.1
-Stable tag: 0.5.0
+Stable tag: 0.5.1
 License: GPLv3 or later
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
@@ -173,6 +173,9 @@ Open an issue on GitHub: [AxLabs/launa-woocommerce-extension](https://github.com
 == Changelog ==
 
 Canonical release notes live on GitHub. This section is a pointer so WordPress.org stays in sync without a second changelog.
+
+= 0.5.1 =
+[GitHub release v0.5.1](https://github.com/AxLabs/launa-woocommerce-extension/releases/tag/v0.5.1)
 
 = 0.5.0 =
 [GitHub release v0.5.0](https://github.com/AxLabs/launa-woocommerce-extension/releases/tag/v0.5.0)
